@@ -83,6 +83,12 @@ export const ANALYTICS_EVENTS = {
   TAB_CHANGED: "tab_changed",
   SCREEN_VIEWED: "screen_viewed",
 
+  // Health events
+  HEALTH_SCORE_VIEWED: "health_score_viewed",
+  HEALTH_SCORE_TAPPED: "health_score_tapped",
+  HEALTH_LOCATION_CHANGED: "health_location_changed",
+  HEALTH_DETAILS_VIEWED: "health_details_viewed",
+
   // Error events
   ERROR_OCCURRED: "error_occurred",
 } as const;

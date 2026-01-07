@@ -37,6 +37,11 @@ export const API_ENDPOINTS = {
     PROFILE: "/api/users/profile",
     UPDATE: "/api/users/profile",
   },
+  HEALTH: {
+    CURRENT: "/api/health/current",
+    HISTORY: "/api/health/history",
+    BY_LOCATION: (location: string) => `/api/health/location/${location}`,
+  },
 } as const;
 
 // Query keys for React Query
@@ -50,5 +55,10 @@ export const QUERY_KEYS = {
   },
   USERS: {
     PROFILE: ["users", "profile"] as const,
+  },
+  HEALTH: {
+    CURRENT: ["health", "current"] as const,
+    HISTORY: ["health", "history"] as const,
+    BY_LOCATION: (location: string) => ["health", "location", location] as const,
   },
 } as const;

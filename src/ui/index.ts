@@ -6,3 +6,4 @@ export { EmptyState } from "./empty-state";
 export { SocialButton } from "./social-button";
 export { Toggle } from "./toggle";
 export { Chip } from "./chip";
+export { MaterialSymbol } from "./material-symbol";

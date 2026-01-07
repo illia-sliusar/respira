@@ -48,3 +48,34 @@ export interface ApiError {
   statusCode: number;
   error?: string;
 }
+
+// Health Overview Types
+export type HealthRiskLevel = "Low Risk" | "Moderate Risk" | "High Risk" | "Very High Risk";
+
+export type HealthCondition = "Excellent" | "Good Conditions" | "Fair" | "Poor" | "Hazardous";
+
+export interface HealthMetrics {
+  id: string;
+  score: number; // 0-10
+  riskLevel: HealthRiskLevel;
+  condition: HealthCondition;
+  description: string;
+  location: string;
+  timestamp: string;
+  aqi?: number; // Air Quality Index
+  temperature?: number;
+  humidity?: number;
+  pollutants?: {
+    pm25?: number;
+    pm10?: number;
+    o3?: number;
+    no2?: number;
+    so2?: number;
+    co?: number;
+  };
+}
+
+export interface HealthOverviewResponse {
+  current: HealthMetrics;
+  history?: HealthMetrics[];
+}
