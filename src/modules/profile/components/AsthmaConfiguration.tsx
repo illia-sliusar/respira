@@ -37,7 +37,7 @@ export function AsthmaConfiguration({ config, onUpdate }: AsthmaConfigurationPro
         </View>
 
         <View className="flex-row items-center justify-between py-4 border-b border-neutral-800">
-          <Text className="text-white text-base font-normal">Thunderstorm Asthma</Text>
+          <Text className="text-white text-base font-normal" style={{ color: '#FFFFFF' }}>Thunderstorm Asthma</Text>
           <Switch
             value={config.thunderstormAsthma}
             onValueChange={(value) => onUpdate({ thunderstormAsthma: value })}

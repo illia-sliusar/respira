@@ -30,15 +30,15 @@ export function CurrentSession() {
   };
 
   return (
-    <View className="px-6 mt-10 mb-8 bg-black">
+    <View className="px-6 mt-10 mb-24 bg-black">
       <Text className="text-white text-sm font-medium uppercase tracking-wider opacity-80 mb-4" style={{ color: '#FFFFFF' }}>
         Current Session
       </Text>
 
       <View className="flex-col">
         <View className="flex-row items-center justify-between py-4 border-b border-neutral-800">
-          <Text className="text-neutral-400 text-base">App Version</Text>
-          <Text className="text-white text-base font-medium">{APP_VERSION}</Text>
+          <Text className="text-neutral-400 text-base" style={{ color: '#9CA3AF' }}>App Version</Text>
+          <Text className="text-white text-base font-medium" style={{ color: '#FFFFFF' }}>{APP_VERSION}</Text>
         </View>
 
         <TouchableOpacity

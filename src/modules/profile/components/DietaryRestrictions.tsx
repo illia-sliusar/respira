@@ -34,6 +34,7 @@ export function DietaryRestrictions({ restrictions, onAdd, onRemove }: DietaryRe
             onChangeText={setInputValue}
             onSubmitEditing={handleAdd}
             returnKeyType="done"
+            style={{ color: '#FFFFFF', backgroundColor: 'transparent', borderBottomColor: '#27272a', borderBottomWidth: 1 }}
           />
           <MaterialIcons
             name="add"
@@ -49,7 +50,7 @@ export function DietaryRestrictions({ restrictions, onAdd, onRemove }: DietaryRe
               key={restriction}
               className="flex-row items-center gap-2 pl-3 pr-2 py-1.5 rounded-md bg-neutral-800"
             >
-              <Text className="text-sm font-medium text-neutral-200">{restriction}</Text>
+              <Text className="text-sm font-medium text-neutral-200" style={{ color: '#E5E5E5' }}>{restriction}</Text>
               <TouchableOpacity onPress={() => onRemove(restriction)}>
                 <MaterialIcons name="close" size={16} color="#6B7280" />
               </TouchableOpacity>

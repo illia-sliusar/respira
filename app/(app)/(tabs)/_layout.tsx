@@ -45,6 +45,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="advisor"
+        options={{
+          title: "Advisor",
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialIcons name="health-and-safety" size={24} color={color} style={{ fontWeight: "300" }} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",

@@ -85,7 +85,7 @@ export default function ProfileScreen() {
 
         <CurrentSession />
 
-          <View className="px-6 pb-6 items-center opacity-40">
+          <View className="px-6 pb-32 items-center opacity-40">
             <View className="flex-row items-center gap-1.5 mb-2">
               <MaterialIcons name="lock" size={12} color="#6B7280" />
               <Text className="text-xs font-medium text-neutral-400">Encrypted & Local</Text>
