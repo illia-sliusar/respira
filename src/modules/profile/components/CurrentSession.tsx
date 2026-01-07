@@ -1,0 +1,60 @@
+import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { useState } from "react";
+import { MaterialIcons } from "@expo/vector-icons";
+import { authClient } from "@/src/lib/better-auth-client";
+import { analyticsService } from "@/src/modules/analytics";
+import { APP_VERSION } from "@/src/lib/constants";
+
+export function CurrentSession() {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          setIsLoggingOut(true);
+          try {
+            await authClient.signOut();
+            analyticsService.track("user_logged_out");
+          } catch (_error) {
+            Alert.alert("Error", "Failed to logout");
+          } finally {
+            setIsLoggingOut(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  return (
+    <View className="px-6 mt-10 mb-8 bg-black">
+      <Text className="text-white text-sm font-medium uppercase tracking-wider opacity-80 mb-4" style={{ color: '#FFFFFF' }}>
+        Current Session
+      </Text>
+
+      <View className="flex-col">
+        <View className="flex-row items-center justify-between py-4 border-b border-neutral-800">
+          <Text className="text-neutral-400 text-base">App Version</Text>
+          <Text className="text-white text-base font-medium">{APP_VERSION}</Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+          className="flex-row items-center justify-between py-4"
+        >
+          <View className="flex-row items-center gap-2">
+            <MaterialIcons name="logout" size={20} color="#EF4444" />
+            <Text className="text-error text-base font-medium">
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={20} color="#EF4444" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
