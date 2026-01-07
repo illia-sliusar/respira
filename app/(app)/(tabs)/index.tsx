@@ -302,7 +302,7 @@ export default function HomeScreen() {
                 </Text>
               </View>
 
-              <Text className="text-white/60 text-sm leading-relaxed font-light text-center">
+              <Text className="text-white/60 text-base leading-relaxed font-light text-center mt-4">
                 Air quality is excellent. Enjoy a walk outside!
               </Text>
             </View>
