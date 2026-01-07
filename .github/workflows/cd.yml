@@ -1,0 +1,99 @@
+name: CD - Continuous Deployment
+
+# Run on manual triggers
+on:
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Deployment stage (development, production)"
+        required: true
+        default: "development"
+        type: choice
+        options:
+          - development
+          - production
+
+# Ensure only one deployment runs at a time
+concurrency:
+  group: deploy-${{ github.event.inputs.stage }}
+  cancel-in-progress: false
+
+# AWS OIDC permissions for role assumption
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # Single comprehensive deployment job
+  deploy:
+    name: Deploy to EAS (${{ github.event.inputs.stage }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    environment:
+      name: ${{ github.event.inputs.stage }}
+
+    steps:
+      - name: Check for EXPO_TOKEN
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "You must provide an EXPO_TOKEN secret linked to this project's Expo account in this repo's secrets. Learn more: https://docs.expo.dev/eas-update/github-actions"
+            exit 1
+          fi
+
+      # Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # Determine deployment stage
+      - name: Set deployment stage
+        id: set-stage
+        run: |
+          STAGE="${{ github.event.inputs.stage }}"
+          echo "stage=$STAGE" >> $GITHUB_OUTPUT
+          echo "🎯 Deploying to: $STAGE"
+
+      # Enable Corepack for Yarn package management
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Set up Node.js environment with caching
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "yarn"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Set up Expo Application Services (EAS)
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Set environment variables based on stage
+      - name: Set environment variables with .env
+        run: |
+          echo "Setting environment variables from .env file"
+          cp configs/.env.${{ steps.set-stage.outputs.stage }} .env
+
+      # Pre-deployment validation
+      - name: Run pre-deployment checks
+        run: |
+          echo "🔍 Running pre-deployment validation..."
+          yarn lint
+          yarn typecheck
+
+      # Create Expo EAS Update preview
+      - name: Create preview
+        uses: expo/expo-github-action/preview@v8
+        with:
+          command: eas update --auto --channel ${{ steps.set-stage.outputs.stage }}

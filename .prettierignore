@@ -1,0 +1,21 @@
+# Dependencies
+node_modules
+.yarn
+
+# Build outputs
+build
+dist
+.expo
+android
+ios
+
+# Generated files
+*.lock
+yarn.lock
+package-lock.json
+
+# Coverage
+coverage
+
+# Misc
+.DS_Store

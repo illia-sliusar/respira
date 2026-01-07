@@ -1,0 +1,60 @@
+name: CI - Continuous Integration
+
+# Run on pull requests and pushes to main branch
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+# Cancel previous runs if a new one is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Single comprehensive CI job with all checks
+  ci-pipeline:
+    name: CI Pipeline (Lint, Type Check, Audit)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Enable Corepack for Yarn package management
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Set up Node.js environment with caching
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+
+      # Install project dependencies
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Step 1: Check code formatting with Prettier
+      - name: Check code formatting
+        run: yarn format --check
+
+      # Step 2: Run ESLint to check code quality
+      - name: Lint code
+        run: yarn lint
+
+      # Step 3: Run TypeScript type checking
+      - name: Type check
+        run: yarn typecheck
+
+      # Step 4: Security audit on dependencies
+      - name: Audit dependencies
+        run: yarn npm audit --all --recursive
+        continue-on-error: true
+
+      # Final success message
+      - name: CI Pipeline Complete
+        run: echo "✅ All CI checks passed successfully!"
