@@ -20,6 +20,17 @@ export default function AppLayout() {
           headerTintColor: "#2180E1",
         }}
       />
+      <Stack.Screen
+        name="health/details"
+        options={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#000000" },
+          presentation: "modal",
+          animation: "slide_from_bottom",
+          gestureEnabled: true,
+          gestureDirection: "vertical",
+        }}
+      />
     </Stack>
   );
 }

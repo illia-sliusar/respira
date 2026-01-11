@@ -3007,6 +3007,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/datetimepicker@npm:8.4.4":
+  version: 8.4.4
+  resolution: "@react-native-community/datetimepicker@npm:8.4.4"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    expo: ">=52.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+    react-native-windows:
+      optional: true
+  checksum: 10c0/05794d2746584be85bd74f86593951714407da2bebf49e63e676d58d40a5c85923ae87342a930fde59b60bd5f18e6c878fe747a92f67271d339ed4b1fde6479e
+  languageName: node
+  linkType: hard
+
 "@react-native/assets-registry@npm:0.81.5":
   version: 0.81.5
   resolution: "@react-native/assets-registry@npm:0.81.5"
@@ -11680,6 +11699,7 @@ __metadata:
     "@better-auth/expo": "npm:^1.4.10"
     "@hookform/resolvers": "npm:^5.2.2"
     "@react-native-async-storage/async-storage": "npm:^2.1.2"
+    "@react-native-community/datetimepicker": "npm:8.4.4"
     "@tanstack/query-async-storage-persister": "npm:^5.90.18"
     "@tanstack/react-query": "npm:^5.62.17"
     "@tanstack/react-query-persist-client": "npm:^5.90.18"

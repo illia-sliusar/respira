@@ -82,10 +82,31 @@ export const MOCK_HEALTH_MODERATE: HealthMetrics = {
   },
 };
 
+// Medium Risk air quality (score 6/10) - Matches HTML design mockup
+export const MOCK_HEALTH_MEDIUM: HealthMetrics = {
+  id: "mock-health-medium",
+  score: 6,
+  riskLevel: "Medium Risk",
+  condition: "Moderate Conditions",
+  description: "Air quality is moderate. Sensitive individuals should limit prolonged outdoor exertion.",
+  location: "San Francisco",
+  timestamp: new Date().toISOString(),
+  aqi: 75,
+  temperature: 72,
+  humidity: 55,
+  pollutants: {
+    pm25: 45,
+    pm10: 70,
+    o3: 65,
+    no2: 55,
+  },
+};
+
 // Switch between different states for testing:
 // export const MOCK_HEALTH_METRICS = MOCK_HEALTH_EXCELLENT; // Score 9 - Green/Safe
 // export const MOCK_HEALTH_METRICS = MOCK_HEALTH_MODERATE;  // Score 5 - Orange/Moderate
-export const MOCK_HEALTH_METRICS = MOCK_HEALTH_HAZARDOUS; // Score 3 - High Risk (design)
+export const MOCK_HEALTH_METRICS = MOCK_HEALTH_MEDIUM;     // Score 6 - Medium Risk (HTML design)
+// export const MOCK_HEALTH_METRICS = MOCK_HEALTH_HAZARDOUS; // Score 3 - High Risk (design)
 // export const MOCK_HEALTH_METRICS = MOCK_HEALTH_SEVERE;    // Score 1 - Very High Risk
 
 // For easy reference
@@ -169,13 +190,13 @@ export function getScoreColor(score: number) {
     };
   if (score >= 4)
     return {
-      primary: "rgba(251, 146, 60, 0.9)", // orange-400
-      secondary: "rgba(249, 115, 22, 0.1)", // orange-500/10
-      border: "rgba(249, 115, 22, 0.2)", // orange-500/20
-      glow: "#F97316",
-      text: "rgba(251, 146, 60, 0.8)", // orange-400/80
-      badgeText: "rgba(251, 146, 60, 0.8)", // orange-400/80
-      scoreText: "rgba(255, 255, 255, 0.4)", // white/40 for score
+      primary: "rgba(234, 88, 12, 0.9)", // orange-600 (#ea580c) - deep orange for medium risk
+      secondary: "rgba(234, 88, 12, 0.1)", // orange-600/10
+      border: "rgba(234, 88, 12, 0.2)", // orange-600/20
+      glow: "#ea580c",
+      text: "rgba(234, 88, 12, 0.9)", // orange-600/90
+      badgeText: "rgba(234, 88, 12, 0.9)", // orange-600/90
+      scoreText: "rgba(255, 255, 255, 0.5)", // white/50 for score
     };
   // High Risk / Hazardous - Subtle dark red theme
   return {
@@ -190,8 +211,8 @@ export function getScoreColor(score: number) {
 }
 
 export function getIconName(score: number): "eco" | "directions_walk" | "warning" | "dangerous" {
-  if (score >= 8) return "eco";
-  if (score >= 6) return "directions_walk";
-  if (score >= 3) return "warning"; // High Risk shows warning triangle
-  return "dangerous"; // Very High Risk (1-2) shows dangerous icon
+  if (score >= 8) return "eco"; // Safe - green leaf
+  if (score >= 4) return "warning"; // Medium Risk - warning triangle
+  if (score >= 2) return "warning"; // High Risk - warning triangle
+  return "dangerous"; // Very High Risk (1) - dangerous icon
 }

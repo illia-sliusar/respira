@@ -36,8 +36,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="trip-planner"
+        options={{
+          title: "Trip Planner",
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialIcons name="map" size={24} color={color} style={{ fontWeight: "300" }} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="notes"
         options={{
+          href: null, // Hide from tab bar
           title: "History",
           tabBarIcon: ({ focused, color }) => (
             <MaterialIcons name="history" size={24} color={color} style={{ fontWeight: "300" }} />

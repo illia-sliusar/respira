@@ -1,8 +1,8 @@
 import React from "react";
 import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, {
-  useAnimatedStyle,
+import { router } from "expo-router";
+import {
   useSharedValue,
   withRepeat,
   withTiming,
@@ -90,8 +90,8 @@ export default function HomeScreen() {
       riskLevel: healthData?.riskLevel,
     });
 
-    // Navigate to detailed view (future implementation)
-    // router.push("/health/details");
+    // Navigate to detailed view
+    router.push("/health/details");
   };
 
   // Get colors and icon based on score
@@ -128,8 +128,9 @@ export default function HomeScreen() {
       };
     }
     if (score >= 4) {
+      // Medium Risk - Deep orange tones matching #ea580c
       return {
-        topGradient: ["rgba(249, 115, 22, 0.08)", "transparent"] as [string, string],
+        topGradient: ["rgba(234, 88, 12, 0.15)", "transparent"] as [string, string],
         blobGradient: ["rgba(234, 88, 12, 0.4)", "rgba(0, 0, 0, 0)"] as [string, string],
       };
     }
@@ -140,6 +141,20 @@ export default function HomeScreen() {
     };
   };
 
+  // Get blob variant based on score
+  const getBlobVariant = (): "safe" | "medium" | "hazardous" => {
+    if (score >= 8) return "safe";
+    if (score >= 4) return "medium";
+    return "hazardous";
+  };
+
+  // Get blob size based on variant
+  const getBlobSize = () => {
+    if (score >= 8) return 280;
+    if (score >= 4) return 600; // Larger blob for medium risk (matches HTML design)
+    return 500; // Large blob for hazardous
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-black" edges={["top"]}>
       <View className="flex-1 relative">
@@ -147,7 +162,8 @@ export default function HomeScreen() {
         <AnimatedBackground
           pulseProgress={pulseProgress}
           colors={getBackgroundColors()}
-          blobSize={score < 4 ? 500 : 280}
+          blobSize={getBlobSize()}
+          variant={getBlobVariant()}
         />
 
         {/* Header */}

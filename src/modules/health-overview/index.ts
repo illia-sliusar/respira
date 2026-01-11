@@ -8,6 +8,8 @@ export {
   HealthBadge,
   HealthDescription,
   AnimatedBackground,
+  MetricCard,
+  HealthTip,
 } from "./components";
 
 // Mock data and helpers
@@ -16,6 +18,7 @@ export {
   MOCK_HEALTH_EXCELLENT,
   MOCK_HEALTH_SAFE,
   MOCK_HEALTH_MODERATE,
+  MOCK_HEALTH_MEDIUM,
   MOCK_HEALTH_HAZARDOUS,
   MOCK_HEALTH_SEVERE,
   MOCK_HEALTH_HISTORY,

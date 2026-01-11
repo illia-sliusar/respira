@@ -50,9 +50,9 @@ export interface ApiError {
 }
 
 // Health Overview Types
-export type HealthRiskLevel = "Low Risk" | "Moderate Risk" | "High Risk" | "Very High Risk";
+export type HealthRiskLevel = "Low Risk" | "Medium Risk" | "Moderate Risk" | "High Risk" | "Very High Risk";
 
-export type HealthCondition = "Excellent" | "Good Conditions" | "Fair" | "Poor" | "Hazardous";
+export type HealthCondition = "Excellent" | "Good Conditions" | "Moderate Conditions" | "Fair" | "Poor" | "Hazardous";
 
 export interface HealthMetrics {
   id: string;
