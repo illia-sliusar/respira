@@ -39,7 +39,7 @@ export function LoginForm() {
 
         if (success) {
           // Force reload to trigger Better Auth session detection
-          router.replace("/(app)/(tabs)");
+          router.replace("/");
         } else {
           alert("Error: Failed to create mock session");
         }
@@ -55,6 +55,9 @@ export function LoginForm() {
         alert(`Login Failed: ${error.message || "Invalid credentials"}`);
         return;
       }
+
+      // Navigate to app after successful login
+      router.replace("/");
     } catch (_err) {
       alert(`Error: An unexpected error occurred: ${(_err as Error).message}`);
     } finally {
@@ -71,7 +74,7 @@ export function LoginForm() {
         const success = await mockLogin();
         if (success) {
           // Navigate to app - the routing guard will pick up the session
-          router.replace("/(app)/(tabs)");
+          router.replace("/");
         } else {
           alert("Error: Failed to create mock session");
         }
@@ -81,7 +84,7 @@ export function LoginForm() {
 
       await authClient.signIn.social({
         provider,
-        callbackURL: "respira://auth/callback",
+        callbackURL: "tsmobile://auth/callback",
       });
     } catch (_err) {
       alert(`Error: ${provider} sign in failed`);

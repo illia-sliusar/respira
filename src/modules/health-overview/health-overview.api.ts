@@ -3,14 +3,37 @@ import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS, QUERY_KEYS } from "@/src/lib/constants";
 import type { HealthMetrics } from "@/src/types";
 import { MOCK_HEALTH_METRICS, MOCK_HEALTH_HISTORY } from "./mock-health-overview";
+import { useLocationStore } from "@/src/modules/location";
 
-// Query: Get current health metrics
+interface LocationParams {
+  latitude: number;
+  longitude: number;
+  location?: string;
+}
+
+// Query: Get current health metrics with location
 export function useCurrentHealth() {
+  const getLocationOrDefault = useLocationStore(
+    (state) => state.getLocationOrDefault
+  );
+
   return useQuery({
     queryKey: QUERY_KEYS.HEALTH.CURRENT,
     queryFn: async () => {
       try {
-        const response = await apiClient.get<HealthMetrics>(API_ENDPOINTS.HEALTH.CURRENT);
+        const locationData = getLocationOrDefault();
+        const params: LocationParams = {
+          latitude: locationData.coordinates.latitude,
+          longitude: locationData.coordinates.longitude,
+        };
+        if (locationData.locationName) {
+          params.location = locationData.locationName;
+        }
+
+        const response = await apiClient.get<HealthMetrics>(
+          API_ENDPOINTS.HEALTH.CURRENT,
+          { params }
+        );
         return response.data;
       } catch (error) {
         // Fallback to mock data if API fails
@@ -25,13 +48,29 @@ export function useCurrentHealth() {
   });
 }
 
-// Query: Get health history
+// Query: Get health history with location
 export function useHealthHistory() {
+  const getLocationOrDefault = useLocationStore(
+    (state) => state.getLocationOrDefault
+  );
+
   return useQuery({
     queryKey: QUERY_KEYS.HEALTH.HISTORY,
     queryFn: async () => {
       try {
-        const response = await apiClient.get<HealthMetrics[]>(API_ENDPOINTS.HEALTH.HISTORY);
+        const locationData = getLocationOrDefault();
+        const params: LocationParams = {
+          latitude: locationData.coordinates.latitude,
+          longitude: locationData.coordinates.longitude,
+        };
+        if (locationData.locationName) {
+          params.location = locationData.locationName;
+        }
+
+        const response = await apiClient.get<HealthMetrics[]>(
+          API_ENDPOINTS.HEALTH.HISTORY,
+          { params }
+        );
         return response.data;
       } catch (error) {
         console.warn("Using mock health history:", error);

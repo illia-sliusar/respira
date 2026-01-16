@@ -42,6 +42,9 @@ export const API_ENDPOINTS = {
     HISTORY: "/api/health/history",
     BY_LOCATION: (location: string) => `/api/health/location/${location}`,
   },
+  SCORE: {
+    PERSONALIZED: "/api/score/personalized",
+  },
 } as const;
 
 // Query keys for React Query
@@ -60,5 +63,9 @@ export const QUERY_KEYS = {
     CURRENT: ["health", "current"] as const,
     HISTORY: ["health", "history"] as const,
     BY_LOCATION: (location: string) => ["health", "location", location] as const,
+  },
+  SCORE: {
+    PERSONALIZED: (lat: number, lon: number) =>
+      ["score", "personalized", lat, lon] as const,
   },
 } as const;

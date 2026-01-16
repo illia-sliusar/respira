@@ -36,6 +36,7 @@ export function Input({
       )}
       <View className="relative">
         <TextInput
+          {...props}
           className={cn(
             // Base styles
             "text-base",
@@ -68,6 +69,9 @@ export function Input({
           )}
           placeholderTextColor={isBox ? "#9ca3af" : "#737373"}
           textAlignVertical="center"
+          // Disable iOS strong password autofill for password fields
+          textContentType={props.secureTextEntry ? "oneTimeCode" : props.textContentType}
+          autoComplete={props.secureTextEntry ? "off" : props.autoComplete}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);
@@ -76,7 +80,6 @@ export function Input({
             setIsFocused(false);
             props.onBlur?.(e);
           }}
-          {...props}
         />
         {rightIcon && (
           <TouchableOpacity

@@ -40,6 +40,9 @@ export function SignupForm() {
         alert(`Signup Failed: ${error.message || "Unable to create account"}`);
         return;
       }
+
+      // Navigate to app after successful signup
+      router.replace("/");
     } catch (_err) {
       alert(`Error: An unexpected error occurred: ${(_err as Error).message}`);
     } finally {
@@ -56,7 +59,7 @@ export function SignupForm() {
         const success = await mockLogin();
         if (success) {
           // Navigate to app - the routing guard will pick up the session
-          router.replace("/(app)/(tabs)");
+          router.replace("/");
         } else {
           alert("Error: Failed to create mock session");
         }
@@ -66,7 +69,7 @@ export function SignupForm() {
 
       await authClient.signIn.social({
         provider,
-        callbackURL: "respira://auth/callback",
+        callbackURL: "tsmobile://auth/callback",
       });
     } catch (_err) {
       alert(`Error: ${provider} sign in failed`);

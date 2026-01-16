@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { View, ScrollView, Alert } from "react-native";
+import { View, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
   ProfileHeader,
   UserInfo,
@@ -14,6 +15,7 @@ import { Text } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const {
     profile,
     isLoading,
@@ -39,7 +41,7 @@ export default function ProfileScreen() {
         dietaryRestrictions: profile.dietaryRestrictions,
       });
       Alert.alert("Success", "Profile updated successfully");
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to update profile");
     }
   };
@@ -82,6 +84,28 @@ export default function ProfileScreen() {
           onAdd={addDietaryRestriction}
           onRemove={removeDietaryRestriction}
         />
+
+        {/* Developer Section */}
+        <View className="px-6 mt-6">
+          <Text className="text-white text-sm font-medium uppercase tracking-wider opacity-80 mb-4">
+            Developer
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(app)/api-test")}
+            className="flex-row items-center justify-between bg-neutral-900 rounded-xl p-4"
+          >
+            <View className="flex-row items-center gap-3">
+              <View className="w-10 h-10 bg-blue-600/20 rounded-full items-center justify-center">
+                <MaterialIcons name="api" size={20} color="#3b82f6" />
+              </View>
+              <View>
+                <Text className="text-white font-medium">API Test</Text>
+                <Text className="text-neutral-500 text-sm">Test health API endpoints</Text>
+              </View>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color="#525252" />
+          </TouchableOpacity>
+        </View>
 
         <CurrentSession />
 

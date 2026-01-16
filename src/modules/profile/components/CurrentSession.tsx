@@ -1,12 +1,15 @@
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { authClient } from "@/src/lib/better-auth-client";
 import { analyticsService } from "@/src/modules/analytics";
 import { APP_VERSION } from "@/src/lib/constants";
 
 export function CurrentSession() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -17,8 +20,17 @@ export function CurrentSession() {
         onPress: async () => {
           setIsLoggingOut(true);
           try {
+            // Sign out from Better Auth
             await authClient.signOut();
+
+            // Clear local session storage (for mock sessions too)
+            await SecureStore.deleteItemAsync("tsmobile.session");
+            await SecureStore.deleteItemAsync("tsmobile.token");
+
             analyticsService.track("user_logged_out");
+
+            // Navigate to login screen
+            router.replace("/(auth)/login");
           } catch (_error) {
             Alert.alert("Error", "Failed to logout");
           } finally {
