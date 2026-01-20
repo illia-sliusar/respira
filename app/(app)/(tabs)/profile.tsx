@@ -21,12 +21,11 @@ export default function ProfileScreen() {
     isLoading,
     isSaving,
     fetchProfile,
-    addAllergy,
-    removeAllergy,
+    togglePollenAllergy,
+    toggleAsthmaTrigger,
     addDietaryRestriction,
     removeDietaryRestriction,
-    updateAsthmaConfig,
-    updateProfile,
+    saveHealthProfile,
   } = useProfileStore();
 
   useEffect(() => {
@@ -35,14 +34,10 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     try {
-      await updateProfile({
-        allergies: profile.allergies,
-        asthmaConfig: profile.asthmaConfig,
-        dietaryRestrictions: profile.dietaryRestrictions,
-      });
-      Alert.alert("Success", "Profile updated successfully");
+      await saveHealthProfile();
+      Alert.alert("Success", "Profile saved successfully");
     } catch {
-      Alert.alert("Error", "Failed to update profile");
+      Alert.alert("Error", "Failed to save profile");
     }
   };
 
@@ -66,17 +61,21 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ backgroundColor: '#000000' }}
         >
-          <UserInfo user={profile.user} />
+          <TouchableOpacity
+            onPress={() => router.push("/(app)/profile/user-details")}
+            activeOpacity={0.7}
+          >
+            <UserInfo user={profile.user} showEditIndicator />
+          </TouchableOpacity>
 
         <AllergiesSection
-          allergies={profile.allergies}
-          onAdd={addAllergy}
-          onRemove={removeAllergy}
+          selectedAllergies={profile.pollenAllergies}
+          onToggle={togglePollenAllergy}
         />
 
         <AsthmaConfigurationComponent
-          config={profile.asthmaConfig}
-          onUpdate={updateAsthmaConfig}
+          selectedTriggers={profile.asthmaTriggers}
+          onToggle={toggleAsthmaTrigger}
         />
 
         <DietaryRestrictions

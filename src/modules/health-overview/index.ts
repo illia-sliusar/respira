@@ -1,5 +1,11 @@
 // API hooks
-export { useCurrentHealth, useHealthHistory, useHealthByLocation } from "./health-overview.api";
+export {
+  useCurrentHealth,
+  useHealthHistory,
+  useHealthByLocation,
+  hasRealData,
+  isAllSimulated,
+} from "./health-overview.api";
 
 // Components
 export {
@@ -10,9 +16,11 @@ export {
   AnimatedBackground,
   MetricCard,
   HealthTip,
+  FabricBackground,
+  FloatingFabricBackground
 } from "./components";
 
-// Mock data and helpers
+// Mock data only (helpers moved to @/src/modules/score)
 export {
   MOCK_HEALTH_METRICS,
   MOCK_HEALTH_EXCELLENT,
@@ -22,9 +30,14 @@ export {
   MOCK_HEALTH_HAZARDOUS,
   MOCK_HEALTH_SEVERE,
   MOCK_HEALTH_HISTORY,
-  getRiskLevelFromScore,
-  getConditionFromScore,
-  getDescriptionFromScore,
-  getScoreColor,
-  getIconName,
 } from "./mock-health-overview";
+
+// Re-export score utilities for backwards compatibility
+// Prefer importing directly from @/src/modules/score
+export {
+  getScoreRiskLevel as getRiskLevelFromScore,
+  getScoreCondition as getConditionFromScore,
+  getScoreDescription as getDescriptionFromScore,
+  getScoreColors as getScoreColor,
+  getScoreIcon as getIconName,
+} from "../score/score.utils";

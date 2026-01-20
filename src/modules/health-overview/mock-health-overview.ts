@@ -1,4 +1,4 @@
-import type { HealthMetrics, HealthRiskLevel, HealthCondition } from "@/src/types";
+import type { HealthMetrics } from "@/src/types";
 
 // Excellent air quality (score 9/10)
 export const MOCK_HEALTH_EXCELLENT: HealthMetrics = {
@@ -10,7 +10,7 @@ export const MOCK_HEALTH_EXCELLENT: HealthMetrics = {
   location: "San Francisco",
   timestamp: new Date().toISOString(),
   aqi: 25,
-  temperature: 72,
+  temperature: 22, // Celsius
   humidity: 55,
   pollutants: {
     pm25: 8,
@@ -30,7 +30,7 @@ export const MOCK_HEALTH_HAZARDOUS: HealthMetrics = {
   location: "San Francisco",
   timestamp: new Date().toISOString(),
   aqi: 180,
-  temperature: 72,
+  temperature: 22, // Celsius
   humidity: 45,
   pollutants: {
     pm25: 125,
@@ -50,7 +50,7 @@ export const MOCK_HEALTH_SEVERE: HealthMetrics = {
   location: "San Francisco",
   timestamp: new Date().toISOString(),
   aqi: 301,
-  temperature: 75,
+  temperature: 24, // Celsius
   humidity: 50,
   pollutants: {
     pm25: 250,
@@ -72,7 +72,7 @@ export const MOCK_HEALTH_MODERATE: HealthMetrics = {
   location: "San Francisco",
   timestamp: new Date().toISOString(),
   aqi: 85,
-  temperature: 70,
+  temperature: 21, // Celsius
   humidity: 58,
   pollutants: {
     pm25: 55,
@@ -92,7 +92,7 @@ export const MOCK_HEALTH_MEDIUM: HealthMetrics = {
   location: "San Francisco",
   timestamp: new Date().toISOString(),
   aqi: 75,
-  temperature: 72,
+  temperature: 22, // Celsius
   humidity: 55,
   pollutants: {
     pm25: 45,
@@ -123,7 +123,7 @@ export const MOCK_HEALTH_HISTORY: HealthMetrics[] = [
     location: "San Francisco",
     timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     aqi: 40,
-    temperature: 68,
+    temperature: 20, // Celsius
     humidity: 60,
   },
   {
@@ -135,84 +135,10 @@ export const MOCK_HEALTH_HISTORY: HealthMetrics[] = [
     location: "San Francisco",
     timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     aqi: 65,
-    temperature: 70,
+    temperature: 21, // Celsius
     humidity: 58,
   },
 ];
 
-// Helper functions for determining status based on score
-
-export function getRiskLevelFromScore(score: number): HealthRiskLevel {
-  if (score >= 8) return "Low Risk";
-  if (score >= 6) return "Moderate Risk";
-  if (score >= 4) return "High Risk";
-  return "Very High Risk";
-}
-
-export function getConditionFromScore(score: number): HealthCondition {
-  if (score >= 9) return "Excellent";
-  if (score >= 7) return "Good Conditions";
-  if (score >= 5) return "Fair";
-  if (score >= 3) return "Poor";
-  return "Hazardous";
-}
-
-export function getDescriptionFromScore(score: number): string {
-  if (score >= 8) return "Air quality is excellent. Enjoy a walk outside!";
-  if (score >= 6) return "Air quality is good. Great day for outdoor activities.";
-  if (score >= 4)
-    return "Air quality is moderate. Sensitive individuals should limit outdoor exposure.";
-  if (score >= 2) return "Air quality is poor. Consider staying indoors.";
-  return "Air quality is hazardous. Avoid outdoor activities.";
-}
-
-// Color helpers based on score
-export function getScoreColor(score: number) {
-  if (score >= 8)
-    return {
-      primary: "rgba(52, 211, 153, 0.9)", // emerald-400
-      secondary: "rgba(16, 185, 129, 0.1)", // emerald-500/10
-      border: "rgba(16, 185, 129, 0.2)", // emerald-500/20
-      glow: "#10b981",
-      text: "rgba(52, 211, 153, 0.8)", // emerald-400/80
-      badgeText: "rgba(52, 211, 153, 0.8)", // emerald-400/80
-      scoreText: "rgba(255, 255, 255, 0.4)", // white/40 for score
-    };
-  if (score >= 6)
-    return {
-      primary: "rgba(251, 191, 36, 0.9)", // yellow-400
-      secondary: "rgba(245, 158, 11, 0.1)", // yellow-500/10
-      border: "rgba(245, 158, 11, 0.2)", // yellow-500/20
-      glow: "#F59E0B",
-      text: "rgba(251, 191, 36, 0.8)", // yellow-400/80
-      badgeText: "rgba(251, 191, 36, 0.8)", // yellow-400/80
-      scoreText: "rgba(255, 255, 255, 0.4)", // white/40 for score
-    };
-  if (score >= 4)
-    return {
-      primary: "rgba(234, 88, 12, 0.9)", // orange-600 (#ea580c) - deep orange for medium risk
-      secondary: "rgba(234, 88, 12, 0.1)", // orange-600/10
-      border: "rgba(234, 88, 12, 0.2)", // orange-600/20
-      glow: "#ea580c",
-      text: "rgba(234, 88, 12, 0.9)", // orange-600/90
-      badgeText: "rgba(234, 88, 12, 0.9)", // orange-600/90
-      scoreText: "rgba(255, 255, 255, 0.5)", // white/50 for score
-    };
-  // High Risk / Hazardous - Subtle dark red theme
-  return {
-    primary: "rgba(239, 68, 68, 0.9)", // red-500 for icon
-    secondary: "rgba(255, 255, 255, 0.05)", // white/5 for badge bg
-    border: "rgba(255, 255, 255, 0.05)", // white/5 for rings
-    glow: "#7f1d1d", // dark red-900 for shadow
-    text: "rgba(255, 255, 255, 0.7)", // white/70 for badge text
-    badgeText: "rgba(255, 255, 255, 0.7)", // white/70 for badge
-    scoreText: "rgba(255, 255, 255, 0.4)", // white/40 for score
-  };
-}
-
-export function getIconName(score: number): "eco" | "directions_walk" | "warning" | "dangerous" {
-  if (score >= 8) return "eco"; // Safe - green leaf
-  if (score >= 4) return "warning"; // Medium Risk - warning triangle
-  if (score >= 2) return "warning"; // High Risk - warning triangle
-  return "dangerous"; // Very High Risk (1) - dangerous icon
-}
+// Helper functions moved to @/src/modules/score/score.utils.ts
+// Import from @/src/modules/score instead

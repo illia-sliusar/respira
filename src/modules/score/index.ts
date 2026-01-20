@@ -1,9 +1,27 @@
+// API hook
+export { usePersonalizedScore } from "./score.api";
+
+// Score utilities (unified module)
 export {
-  usePersonalizedScore,
   getScoreRiskLevel,
-  getScoreColor,
+  getScoreCondition,
+  getScoreColors,
+  getScoreHexColor,
+  getScoreColorClass,
+  getScoreIcon,
   getScoreRecommendation,
-} from "./score.api";
+  getScoreDescription,
+  getScoreBackgroundColors,
+  getScoreBlobVariant,
+  getScoreBlobSize,
+} from "./score.utils";
+
+export type {
+  ScoreColors,
+  ScoreIcon,
+  BackgroundColors,
+  BlobVariant,
+} from "./score.utils";
 
 export type {
   ConditionType,

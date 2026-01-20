@@ -60,6 +60,11 @@ interface HealthMetrics {
     latitude: number;
     longitude: number;
   };
+  dataSource?: {
+    airQuality: "ads" | "simulated";
+    pollen: "ads" | "simulated";
+    weather?: "open-meteo" | "simulated";
+  };
 }
 
 interface ApiStatus {
@@ -239,6 +244,44 @@ export default function ApiTestScreen() {
         <Text className="text-neutral-400">{data.riskLevel}</Text>
       </View>
 
+      {/* Weather Data */}
+      {(data.temperature !== undefined || data.humidity !== undefined) && (
+        <View className="bg-neutral-800 rounded-xl p-3 mb-3">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-neutral-400 text-xs uppercase">Weather</Text>
+            {data.dataSource?.weather && (
+              <View
+                className="px-2 py-0.5 rounded"
+                style={{
+                  backgroundColor: data.dataSource.weather === "open-meteo" ? "#10b98130" : "#f5980030",
+                }}
+              >
+                <Text
+                  style={{ color: data.dataSource.weather === "open-meteo" ? "#10b981" : "#f59800" }}
+                  className="text-xs font-medium"
+                >
+                  {data.dataSource.weather === "open-meteo" ? "Live" : "Simulated"}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View className="flex-row">
+            {data.temperature !== undefined && (
+              <View className="flex-1">
+                <Text className="text-neutral-500 text-xs">Temperature</Text>
+                <Text className="text-white font-medium text-lg">{data.temperature}°C</Text>
+              </View>
+            )}
+            {data.humidity !== undefined && (
+              <View className="flex-1">
+                <Text className="text-neutral-500 text-xs">Humidity</Text>
+                <Text className="text-white font-medium text-lg">{data.humidity}%</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
       <Text className="text-neutral-300 mb-3">{data.description}</Text>
 
       {data.pollutants && (
@@ -330,6 +373,41 @@ export default function ApiTestScreen() {
           {renderPollenCategory("Weed Pollen", data.pollen.weed.level, data.pollen.weed.types)}
           {data.pollen.mold &&
             renderPollenCategory("Mold Spores", data.pollen.mold.level, data.pollen.mold.types)}
+        </View>
+      )}
+
+      {/* Data Sources */}
+      {data.dataSource && (
+        <View className="flex-row flex-wrap gap-2 mt-3 pt-3 border-t border-neutral-800">
+          <View className="flex-row items-center">
+            <Text className="text-neutral-500 text-xs mr-1">Air:</Text>
+            <Text
+              className="text-xs"
+              style={{ color: data.dataSource.airQuality === "ads" ? "#10b981" : "#f59e0b" }}
+            >
+              {data.dataSource.airQuality === "ads" ? "ADS" : "Sim"}
+            </Text>
+          </View>
+          <View className="flex-row items-center">
+            <Text className="text-neutral-500 text-xs mr-1">Pollen:</Text>
+            <Text
+              className="text-xs"
+              style={{ color: data.dataSource.pollen === "ads" ? "#10b981" : "#f59e0b" }}
+            >
+              {data.dataSource.pollen === "ads" ? "ADS" : "Sim"}
+            </Text>
+          </View>
+          {data.dataSource.weather && (
+            <View className="flex-row items-center">
+              <Text className="text-neutral-500 text-xs mr-1">Weather:</Text>
+              <Text
+                className="text-xs"
+                style={{ color: data.dataSource.weather === "open-meteo" ? "#10b981" : "#f59e0b" }}
+              >
+                {data.dataSource.weather === "open-meteo" ? "Open-Meteo" : "Sim"}
+              </Text>
+            </View>
+          )}
         </View>
       )}
 

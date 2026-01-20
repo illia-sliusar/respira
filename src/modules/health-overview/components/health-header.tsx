@@ -7,6 +7,7 @@ interface HealthHeaderProps {
   location: string;
   avatarUrl?: string;
   onNotificationPress?: () => void;
+  onAvatarPress?: () => void;
 }
 
 export function HealthHeader({
@@ -14,24 +15,41 @@ export function HealthHeader({
   location,
   avatarUrl,
   onNotificationPress,
+  onAvatarPress,
 }: HealthHeaderProps) {
+  // Get initials from name for fallback
+  const getInitials = (name?: string) => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name[0]?.toUpperCase() || "?";
+  };
+
   return (
     <View className="relative z-10 flex-row items-center justify-between px-6 pt-8 pb-4">
-      <View className="flex-row items-center gap-4">
-        <View className="w-10 h-10 rounded-full border border-white/10 overflow-hidden">
-          <Image
-            source={{
-              uri:
-                avatarUrl ||
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuABGljyw5FTHCHMS02hrSPJQDj2DGRR9WrZUYWGMVvdL0clC7QEzvz_Z66b_3xP54ZXZpuUnaKyw6GxrCu9InDENkNQ-BXAAeN1-Owu_3l4Kdfe7bnRoKArccEOt58LrvEnr0nsUguHM-9NO01XBv4pRDAp18BBIyap26VrbtWSBjn5bOETlDQgOX6nqdO5g1nAe0-TAw4ehg5E8y8SmgJqkEUQj3B7YClcnCBVsSqxTdjCg0qjEoFUWMf2GuiB021wSEZGu3mYPF4",
-            }}
-            style={{
-              width: 40,
-              height: 40,
-              opacity: 0.8,
-            }}
-            resizeMode="cover"
-          />
+      <TouchableOpacity
+        className="flex-row items-center gap-4"
+        onPress={onAvatarPress}
+        activeOpacity={0.7}
+      >
+        <View className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-neutral-800 items-center justify-center">
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{
+                width: 40,
+                height: 40,
+                opacity: 0.8,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-white font-semibold text-sm">
+              {getInitials(userName)}
+            </Text>
+          )}
         </View>
         <View>
           <Text className="text-sm font-medium text-white/90">
@@ -41,7 +59,7 @@ export function HealthHeader({
             {location}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
       <TouchableOpacity
         className="w-10 h-10 items-center justify-center rounded-full"
         onPress={onNotificationPress}

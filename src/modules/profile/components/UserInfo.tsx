@@ -1,11 +1,17 @@
 import { View, Text, Image } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import type { UserProfile } from "../types";
 
 interface UserInfoProps {
   user: UserProfile;
+  showEditIndicator?: boolean;
 }
 
-export function UserInfo({ user }: UserInfoProps) {
+export function UserInfo({ user, showEditIndicator = false }: UserInfoProps) {
+  if (!user) {
+    return null;
+  }
+
   return (
     <View className="px-6 pt-4 pb-8 border-b border-neutral-800 bg-black">
       <View className="flex-row items-center gap-5">
@@ -31,6 +37,10 @@ export function UserInfo({ user }: UserInfoProps) {
             {user.email}
           </Text>
         </View>
+
+        {showEditIndicator && (
+          <MaterialIcons name="chevron-right" size={24} color="#525252" />
+        )}
       </View>
     </View>
   );

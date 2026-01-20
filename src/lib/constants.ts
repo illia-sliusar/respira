@@ -33,9 +33,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/notes/${id}`,
     DELETE: (id: string) => `/api/notes/${id}`,
   },
-  USERS: {
-    PROFILE: "/api/users/profile",
-    UPDATE: "/api/users/profile",
+  USER: {
+    PROFILE: "/api/user/profile",
+    UPDATE: "/api/user/profile",
+    HEALTH_PROFILE: "/api/user/health-profile",
   },
   HEALTH: {
     CURRENT: "/api/health/current",
@@ -44,6 +45,9 @@ export const API_ENDPOINTS = {
   },
   SCORE: {
     PERSONALIZED: "/api/score/personalized",
+  },
+  ADVISOR: {
+    GET: "/api/advisor",
   },
 } as const;
 
@@ -56,16 +60,23 @@ export const QUERY_KEYS = {
     ALL: ["notes"] as const,
     DETAIL: (id: string) => ["notes", id] as const,
   },
-  USERS: {
-    PROFILE: ["users", "profile"] as const,
+  USER: {
+    PROFILE: ["user", "profile"] as const,
+    HEALTH_PROFILE: ["user", "health-profile"] as const,
   },
   HEALTH: {
-    CURRENT: ["health", "current"] as const,
-    HISTORY: ["health", "history"] as const,
+    CURRENT: (lat: number, lon: number) =>
+      ["health", "current", lat, lon] as const,
+    HISTORY: (lat: number, lon: number) =>
+      ["health", "history", lat, lon] as const,
     BY_LOCATION: (location: string) => ["health", "location", location] as const,
   },
   SCORE: {
     PERSONALIZED: (lat: number, lon: number) =>
       ["score", "personalized", lat, lon] as const,
+  },
+  ADVISOR: {
+    DATA: (lat: number, lon: number) =>
+      ["advisor", "data", lat, lon] as const,
   },
 } as const;

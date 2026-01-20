@@ -1,5 +1,5 @@
-import React from "react";
-import { View, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { View, ScrollView, ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -10,22 +10,32 @@ import {
   withDelay,
   Easing,
 } from "react-native-reanimated";
-import { useAuthStore } from "@/src/modules/auth";
 import { analyticsService, ANALYTICS_EVENTS } from "@/src/modules/analytics";
+import { useProfileStore } from "@/src/modules/profile";
 import {
-  useCurrentHealth,
+  usePersonalizedScore,
+  getScoreRiskLevel,
+  getScoreRecommendation,
+  getScoreColors,
+  getScoreIcon,
+  getScoreBackgroundColors,
+} from "@/src/modules/score";
+import {
   HealthScoreCircle,
   HealthHeader,
   HealthBadge,
   HealthDescription,
-  AnimatedBackground,
-  getScoreColor,
-  getIconName,
+  FabricBackground,
 } from "@/src/modules/health-overview";
 
 export default function HomeScreen() {
-  const { user } = useAuthStore();
-  const { data: healthData } = useCurrentHealth();
+  const { profile, fetchProfile } = useProfileStore();
+  const { data: scoreData, isLoading, error } = usePersonalizedScore();
+
+  // Fetch profile on mount
+  useEffect(() => {
+    void fetchProfile();
+  }, [fetchProfile]);
 
   // Shared values for animations
   const pulseProgress = useSharedValue(0);
@@ -86,130 +96,112 @@ export default function HomeScreen() {
 
     // Track analytics
     analyticsService.track(ANALYTICS_EVENTS.HEALTH_SCORE_TAPPED, {
-      score: healthData?.score,
-      riskLevel: healthData?.riskLevel,
+      score: scoreData?.score.score_1_10,
+      riskLevel: scoreData?.score.drivers.category,
     });
 
     // Navigate to detailed view
     router.push("/health/details");
   };
 
-  // Get colors and icon based on score
-  const score = healthData?.score ?? 9;
-  const colors = getScoreColor(score);
-  const iconName = getIconName(score);
+  // Extract score data (hardcoded for UI testing)
+  const score = scoreData?.score.score_1_10 ?? 2;
+  const riskLevel = getScoreRiskLevel(score);
+  const dominantDriver = scoreData?.score.drivers.dominant_driver ?? "mixed";
+  const locationName = scoreData?.location.name ?? "Loading...";
 
-  // Get badge icon based on condition
+  // Get colors and icon based on score
+  const colors = getScoreColors(score);
+  const iconName = getScoreIcon(score);
+
+  // Get badge icon based on score (uses same logic as main icon but with extra option)
   const getBadgeIcon = (): "eco" | "directions_walk" | "warning" | "dangerous" | "health_and_safety" => {
-    if (score >= 8) return "directions_walk";
+    if (score >= 8) return "eco";
     if (score >= 6) return "directions_walk";
     if (score >= 4) return "warning";
-    return "health_and_safety"; // Advisory for hazardous conditions
+    return "dangerous";
   };
 
-  // Get badge text based on score
-  const getBadgeText = (): string => {
-    if (score >= 4) return healthData?.condition ?? "Good Conditions";
-    return "Advisory"; // Show "Advisory" instead of "Hazardous"
+  // Get condition text based on score (higher = better)
+  const getConditionText = (): string => {
+    if (score >= 8) return "Excellent";
+    if (score >= 6) return "Good Conditions";
+    if (score >= 4) return "Moderate";
+    return "Poor Conditions";
   };
 
-  // Get background gradient colors based on score
-  const getBackgroundColors = () => {
-    if (score >= 8) {
-      return {
-        topGradient: ["rgba(16, 185, 129, 0.08)", "transparent"] as [string, string],
-        blobGradient: ["rgba(5, 150, 105, 0.4)", "rgba(0, 0, 0, 0)"] as [string, string],
-      };
-    }
-    if (score >= 6) {
-      return {
-        topGradient: ["rgba(245, 158, 11, 0.08)", "transparent"] as [string, string],
-        blobGradient: ["rgba(217, 119, 6, 0.4)", "rgba(0, 0, 0, 0)"] as [string, string],
-      };
-    }
-    if (score >= 4) {
-      // Medium Risk - Deep orange tones matching #ea580c
-      return {
-        topGradient: ["rgba(234, 88, 12, 0.15)", "transparent"] as [string, string],
-        blobGradient: ["rgba(234, 88, 12, 0.4)", "rgba(0, 0, 0, 0)"] as [string, string],
-      };
-    }
-    // Hazardous: Dark subtle red/maroon tones
-    return {
-      topGradient: ["rgba(127, 29, 29, 0.2)", "transparent"] as [string, string],
-      blobGradient: ["rgba(185, 28, 28, 1)", "rgba(0, 0, 0, 0)"] as [string, string],
-    };
-  };
+  // Get description based on score and dominant driver
+  const getDescription = (): string =>
+    getScoreRecommendation(score, dominantDriver);
 
-  // Get blob variant based on score
-  const getBlobVariant = (): "safe" | "medium" | "hazardous" => {
-    if (score >= 8) return "safe";
-    if (score >= 4) return "medium";
-    return "hazardous";
-  };
+  // Get background colors and variant
+  const backgroundColors = getScoreBackgroundColors(score);
+  const backgroundVariant = score >= 8 ? "safe" : score >= 6 ? "medium" : "hazardous";
 
-  // Get blob size based on variant
-  const getBlobSize = () => {
-    if (score >= 8) return 280;
-    if (score >= 4) return 600; // Larger blob for medium risk (matches HTML design)
-    return 500; // Large blob for hazardous
-  };
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-black items-center justify-center" edges={["top"]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text className="text-neutral-400 mt-4">Loading health data...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state - show default UI
+  if (error) {
+    console.warn("Score API error:", error);
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={["top"]}>
-      <View className="flex-1 relative">
-        {/* Background Gradients */}
-        <AnimatedBackground
-          pulseProgress={pulseProgress}
-          colors={getBackgroundColors()}
-          blobSize={getBlobSize()}
-          variant={getBlobVariant()}
-        />
+    <View className="flex-1 bg-black">
+      {/* Background - Fabric shader effect (full screen) */}
+      <FabricBackground variant={backgroundVariant} />
 
-        {/* Header */}
-        <HealthHeader
-          userName={user?.name}
-          location={healthData?.location ?? "San Francisco"}
-          avatarUrl={user?.avatarUrl}
-        />
+      <SafeAreaView className="flex-1" edges={["top"]}>
+        <View className="flex-1 relative">
+          {/* Header */}
+          <HealthHeader
+            userName={profile?.user?.name ?? ""}
+            location={locationName}
+            avatarUrl={profile?.user?.avatarUrl}
+            onAvatarPress={() => router.push("/(app)/profile/user-details")}
+          />
 
-        {/* Main Content */}
-        <ScrollView
-          className="flex-1 relative z-10"
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="flex-1 items-center justify-center pb-20 px-6">
-            {/* Score Circle */}
-            <HealthScoreCircle
-              score={score}
-              riskLevel={healthData?.riskLevel ?? "Low Risk"}
-              iconName={iconName}
-              colors={colors}
-              onPress={handleCirclePress}
-              ring1Progress={ring1Progress}
-              ring2Progress={ring2Progress}
-              circleScale={circleScale}
-              tapHintProgress={tapHintProgress}
-            />
-
-            {/* Status Badge and Description */}
-            <View className="w-full max-w-xs items-center space-y-4">
-              <HealthBadge
-                condition={getBadgeText() as any}
-                iconName={getBadgeIcon()}
+          {/* Main Content */}
+          <ScrollView
+            className="flex-1 relative z-10"
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="flex-1 items-center justify-center pb-20 px-6">
+              {/* Score Circle */}
+              <HealthScoreCircle
+                score={score}
+                riskLevel={riskLevel}
+                iconName={iconName}
                 colors={colors}
+                onPress={handleCirclePress}
+                ring1Progress={ring1Progress}
+                ring2Progress={ring2Progress}
+                circleScale={circleScale}
+                tapHintProgress={tapHintProgress}
               />
 
-              <HealthDescription
-                description={
-                  healthData?.description ?? "Air quality is excellent. Enjoy a walk outside!"
-                }
-              />
+              {/* Status Badge and Description */}
+              <View className="w-full max-w-xs items-center space-y-4">
+                <HealthBadge
+                  condition={getConditionText() as any}
+                  iconName={getBadgeIcon()}
+                  colors={colors}
+                />
+
+                <HealthDescription description={getDescription()} />
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }

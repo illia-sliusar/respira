@@ -11,6 +11,16 @@
 
 ## 📋 Project Overview
 
+- /plan — планирование сложных фич
+- /tdd — TDD-воркфлоу
+- /code-review — ревью кода
+- /build-fix — исправление ошибок сборки
+- /e2e — E2E тесты
+- /refactor-clean — удаление мёртвого кода
+- /update-docs — обновление документации
+- /update-codemaps — обновление карт кода
+- /test-coverage — проверка покрытия тестами
+
 **Breathline** helps people with asthma and allergies understand when it's comfortable to breathe and plan their day with confidence.
 
 Instead of showing raw air quality data, the app provides:

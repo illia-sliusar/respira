@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, ScrollView, Text } from "react-native";
+import { View, ScrollView, Text, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   AdvisorHeader,
@@ -9,32 +9,53 @@ import {
   AdviceCard,
   CompletedItemComponent,
   useAdvisorStore,
+  useAdvisorData,
 } from "@/src/modules/advisor";
 
 export default function AdvisorScreen() {
   const {
-    data,
-    isLoading,
-    fetchAdvisorData,
+    setData,
+    getVisibleItems,
+    getCompletedItems,
     dismissAlert,
     snoozeReminder,
     markReminderTaken,
     saveAdvice,
     dismissAdvice,
+    data: storeData,
   } = useAdvisorStore();
 
+  // Fetch advisor data from API
+  const { data: apiData, isLoading, error } = useAdvisorData();
+
+  // Sync API data to store when it arrives
   useEffect(() => {
-    void fetchAdvisorData();
-  }, [fetchAdvisorData]);
+    if (apiData) {
+      setData({
+        summary: apiData.summary,
+        items: apiData.items,
+        completedItems: apiData.completedItems,
+      });
+    }
+  }, [apiData, setData]);
+
+  // Get visible items (filtered by dismissed/snoozed state)
+  const visibleItems = getVisibleItems();
+  const completedItems = getCompletedItems();
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-black">
+      <SafeAreaView className="flex-1 bg-black" edges={["top"]}>
         <View className="flex-1 items-center justify-center">
-          <Text className="text-neutral-400">Loading...</Text>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text className="text-neutral-400 mt-4">Loading your personalized advice...</Text>
         </View>
       </SafeAreaView>
     );
+  }
+
+  if (error) {
+    console.warn("Advisor API error:", error);
   }
 
   return (
@@ -47,10 +68,10 @@ export default function AdvisorScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ backgroundColor: "#000000", paddingBottom: 120 }}
         >
-          <HealthSummaryComponent summary={data.summary} />
+          <HealthSummaryComponent summary={storeData.summary} />
 
           <View className="flex-col">
-            {data.items.map((item) => {
+            {visibleItems.map((item) => {
               if (item.type === "alert") {
                 return (
                   <AlertCard
@@ -87,9 +108,17 @@ export default function AdvisorScreen() {
               return null;
             })}
 
-            {data.completedItems.map((item) => (
+            {completedItems.map((item) => (
               <CompletedItemComponent key={item.id} item={item} />
             ))}
+
+            {visibleItems.length === 0 && completedItems.length === 0 && !isLoading && (
+              <View className="items-center py-12 px-6">
+                <Text className="text-neutral-400 text-center">
+                  No advice items at the moment. Check back later for personalized recommendations.
+                </Text>
+              </View>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>

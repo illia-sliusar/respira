@@ -1,14 +1,18 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { apiClient } from "@/src/lib/axios";
+import { API_ENDPOINTS } from "@/src/lib/constants";
 import type {
   ProfileData,
   UpdateProfileDto,
-  AsthmaConfiguration,
+  UpdateUserDetailsDto,
   HealthProfile,
   ConditionType,
   RiskTolerance,
   SensitivitySettings,
+  PollenAllergyType,
+  AsthmaTriggerType,
 } from "./types";
 
 // Default health profile for new users
@@ -23,24 +27,46 @@ const DEFAULT_HEALTH_PROFILE: HealthProfile = {
   },
 };
 
-// Mocked profile data
-const MOCK_PROFILE: ProfileData = {
+// Default profile data
+const DEFAULT_PROFILE: ProfileData = {
   user: {
-    id: "1",
-    name: "Alex Doe",
-    email: "alex.doe@example.com",
-    avatarUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCtsm-pxLuWBC5kQVvoADD2uF6_zIU5uvVeNrXfrkXsFeZu-xtATHiI32UzjDg_fEmRyzdPGI4OHm1jjLScKUvbS4xUlt0m2GlpdtawtgSq9KblUO7JtXhn1nGbDv_R25LwDwfJetMRHJ09hvEGGGIinbrsU8V9timZVtHV3WDATVR5GvTkXGDW6EsLrWm089BUaV20PFDRVUNSfSp1kaPzxKidaUZOCj3GhqsKrQyFtoKB1MvGZhT0RpJv9WyHgQCox4kiwR54oMo",
+    id: "",
+    name: "",
+    email: "",
+    avatarUrl: undefined,
   },
-  allergies: ["Grass Pollen", "Wildfire Smoke", "Ragweed"],
-  asthmaConfig: {
-    exerciseInduced: true,
-    coldAirSensitivity: true,
-    thunderstormAsthma: false,
-  },
-  dietaryRestrictions: ["Dairy", "Peanuts"],
+  pollenAllergies: [],
+  asthmaTriggers: [],
+  dietaryRestrictions: [],
   healthProfile: DEFAULT_HEALTH_PROFILE,
 };
+
+// API response types
+interface UserApiResponse {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    image: string | null;
+    role: string;
+  };
+}
+
+interface HealthProfileApiResponse {
+  healthProfile: {
+    pollenAllergies: string[];
+    asthmaTriggers: string[];
+    dietaryRestrictions: string[];
+    conditionType: string;
+    riskTolerance: string;
+    sensitivities: {
+      pollen: number;
+      pollution: number;
+      pm25: number;
+      ozone: number;
+    };
+  };
+}
 
 interface ProfileState {
   profile: ProfileData;
@@ -50,12 +76,26 @@ interface ProfileState {
 
   // Actions
   fetchProfile: () => Promise<void>;
+  fetchHealthProfile: () => Promise<void>;
   updateProfile: (data: UpdateProfileDto) => Promise<void>;
-  addAllergy: (allergy: string) => void;
-  removeAllergy: (allergy: string) => void;
+  updateUserDetails: (data: UpdateUserDetailsDto) => Promise<void>;
+  saveHealthProfile: () => Promise<void>;
+
+  // Pollen allergy actions
+  togglePollenAllergy: (allergy: PollenAllergyType) => void;
+  setPollenAllergies: (allergies: PollenAllergyType[]) => void;
+
+  // Asthma trigger actions
+  toggleAsthmaTrigger: (trigger: AsthmaTriggerType) => void;
+  setAsthmaTriggers: (triggers: AsthmaTriggerType[]) => void;
+
+  // Dietary restriction actions
   addDietaryRestriction: (restriction: string) => void;
   removeDietaryRestriction: (restriction: string) => void;
-  updateAsthmaConfig: (config: Partial<AsthmaConfiguration>) => void;
+
+  // Avatar actions (local storage only)
+  setLocalAvatar: (avatarUrl: string | undefined) => void;
+
   // Health profile actions
   updateHealthProfile: (profile: Partial<HealthProfile>) => void;
   setConditionType: (type: ConditionType) => void;
@@ -70,86 +110,289 @@ interface ProfileState {
       pm25_sensitivity: number;
       ozone_sensitivity: number;
     };
+    pollen_allergies: PollenAllergyType[];
+    asthma_triggers: AsthmaTriggerType[];
   };
 }
 
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set, get) => ({
-      profile: MOCK_PROFILE,
+      profile: DEFAULT_PROFILE,
       isLoading: false,
       isSaving: false,
       error: null,
 
+      // Fetch user profile from backend
       fetchProfile: async () => {
         set({ isLoading: true, error: null });
         try {
-          // Simulate API call
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          // Keep existing profile data (from persistence) but merge with mock user
+          // Fetch both user profile and health profile in parallel
+          const [userResponse, healthResponse] = await Promise.all([
+            apiClient.get<UserApiResponse>(API_ENDPOINTS.USER.PROFILE),
+            apiClient.get<HealthProfileApiResponse>(API_ENDPOINTS.USER.HEALTH_PROFILE),
+          ]);
+
+          const apiUser = userResponse.data.user;
+          const apiHealth = healthResponse.data.healthProfile;
           const currentProfile = get().profile;
+
           set({
             profile: {
-              ...MOCK_PROFILE,
-              healthProfile: currentProfile.healthProfile || DEFAULT_HEALTH_PROFILE,
+              user: {
+                id: apiUser.id,
+                name: apiUser.name || "",
+                email: apiUser.email,
+                // Keep local avatar if exists, otherwise use backend avatar
+                avatarUrl: currentProfile.user.avatarUrl || apiUser.image || undefined,
+              },
+              pollenAllergies: apiHealth.pollenAllergies as PollenAllergyType[],
+              asthmaTriggers: apiHealth.asthmaTriggers as AsthmaTriggerType[],
+              dietaryRestrictions: apiHealth.dietaryRestrictions,
+              healthProfile: {
+                conditionType: apiHealth.conditionType as ConditionType,
+                riskTolerance: apiHealth.riskTolerance as RiskTolerance,
+                sensitivities: apiHealth.sensitivities,
+              },
             },
             isLoading: false,
           });
         } catch {
-          set({ error: "Failed to fetch profile", isLoading: false });
+          // If health profile fetch fails, still try to get user profile
+          try {
+            const userResponse = await apiClient.get<UserApiResponse>(API_ENDPOINTS.USER.PROFILE);
+            const apiUser = userResponse.data.user;
+            const currentProfile = get().profile;
+
+            set({
+              profile: {
+                ...currentProfile,
+                user: {
+                  id: apiUser.id,
+                  name: apiUser.name || "",
+                  email: apiUser.email,
+                  // Keep local avatar if exists
+                  avatarUrl: currentProfile.user.avatarUrl || apiUser.image || undefined,
+                },
+              },
+              isLoading: false,
+            });
+          } catch {
+            set({ error: "Failed to fetch profile", isLoading: false });
+          }
         }
       },
 
-      updateProfile: async (data: UpdateProfileDto) => {
-        set({ isSaving: true, error: null });
+      // Fetch only health profile from backend
+      fetchHealthProfile: async () => {
         try {
-          // Simulate API call
-          await new Promise((resolve) => setTimeout(resolve, 800));
-
+          const response = await apiClient.get<HealthProfileApiResponse>(
+            API_ENDPOINTS.USER.HEALTH_PROFILE
+          );
+          const apiHealth = response.data.healthProfile;
           const currentProfile = get().profile;
-          const updatedProfile: ProfileData = {
-            ...currentProfile,
-            ...data,
-            healthProfile: data.healthProfile
-              ? {
-                  ...currentProfile.healthProfile,
-                  ...data.healthProfile,
-                  sensitivities: {
-                    ...currentProfile.healthProfile.sensitivities,
-                    ...data.healthProfile.sensitivities,
-                  },
-                }
-              : currentProfile.healthProfile,
-          };
 
-          set({ profile: updatedProfile, isSaving: false });
-        } catch {
-          set({ error: "Failed to update profile", isSaving: false });
-        }
-      },
-
-      addAllergy: (allergy: string) => {
-        const currentProfile = get().profile;
-        if (!currentProfile.allergies.includes(allergy)) {
           set({
             profile: {
               ...currentProfile,
-              allergies: [...currentProfile.allergies, allergy],
+              pollenAllergies: apiHealth.pollenAllergies as PollenAllergyType[],
+              asthmaTriggers: apiHealth.asthmaTriggers as AsthmaTriggerType[],
+              dietaryRestrictions: apiHealth.dietaryRestrictions,
+              healthProfile: {
+                conditionType: apiHealth.conditionType as ConditionType,
+                riskTolerance: apiHealth.riskTolerance as RiskTolerance,
+                sensitivities: apiHealth.sensitivities,
+              },
             },
           });
+        } catch {
+          // Silently fail - use local data
         }
       },
 
-      removeAllergy: (allergy: string) => {
+      // Update health profile on backend
+      updateProfile: async (data: UpdateProfileDto) => {
+        set({ isSaving: true, error: null });
+        try {
+          // Build the API payload
+          const payload: {
+            pollenAllergies?: string[];
+            asthmaTriggers?: string[];
+            dietaryRestrictions?: string[];
+            conditionType?: string;
+            riskTolerance?: string;
+            sensitivities?: {
+              pollen?: number;
+              pollution?: number;
+              pm25?: number;
+              ozone?: number;
+            };
+          } = {};
+
+          if (data.pollenAllergies !== undefined) {
+            payload.pollenAllergies = data.pollenAllergies;
+          }
+          if (data.asthmaTriggers !== undefined) {
+            payload.asthmaTriggers = data.asthmaTriggers;
+          }
+          if (data.dietaryRestrictions !== undefined) {
+            payload.dietaryRestrictions = data.dietaryRestrictions;
+          }
+          if (data.healthProfile?.conditionType !== undefined) {
+            payload.conditionType = data.healthProfile.conditionType;
+          }
+          if (data.healthProfile?.riskTolerance !== undefined) {
+            payload.riskTolerance = data.healthProfile.riskTolerance;
+          }
+          if (data.healthProfile?.sensitivities !== undefined) {
+            payload.sensitivities = data.healthProfile.sensitivities;
+          }
+
+          const response = await apiClient.patch<HealthProfileApiResponse>(
+            API_ENDPOINTS.USER.HEALTH_PROFILE,
+            payload
+          );
+
+          const apiHealth = response.data.healthProfile;
+          const currentProfile = get().profile;
+
+          set({
+            profile: {
+              ...currentProfile,
+              pollenAllergies: apiHealth.pollenAllergies as PollenAllergyType[],
+              asthmaTriggers: apiHealth.asthmaTriggers as AsthmaTriggerType[],
+              dietaryRestrictions: apiHealth.dietaryRestrictions,
+              healthProfile: {
+                conditionType: apiHealth.conditionType as ConditionType,
+                riskTolerance: apiHealth.riskTolerance as RiskTolerance,
+                sensitivities: apiHealth.sensitivities,
+              },
+            },
+            isSaving: false,
+          });
+        } catch {
+          set({ error: "Failed to update profile", isSaving: false });
+          throw new Error("Failed to update profile");
+        }
+      },
+
+      // Update user details (name, avatar) on backend
+      updateUserDetails: async (data: UpdateUserDetailsDto) => {
+        set({ isSaving: true, error: null });
+        try {
+          const payload: { name?: string; image?: string | null } = {};
+          if (data.name !== undefined) {
+            payload.name = data.name;
+          }
+          if (data.avatarUrl !== undefined) {
+            payload.image = data.avatarUrl || null;
+          }
+
+          const response = await apiClient.patch<UserApiResponse>(
+            API_ENDPOINTS.USER.UPDATE,
+            payload
+          );
+
+          const apiUser = response.data.user;
+          const currentProfile = get().profile;
+
+          set({
+            profile: {
+              ...currentProfile,
+              user: {
+                ...currentProfile.user,
+                id: apiUser.id,
+                name: apiUser.name || "",
+                email: apiUser.email,
+                avatarUrl: apiUser.image || undefined,
+              },
+            },
+            isSaving: false,
+          });
+        } catch {
+          set({ error: "Failed to update user details", isSaving: false });
+          throw new Error("Failed to update user details");
+        }
+      },
+
+      // Save current health profile to backend
+      saveHealthProfile: async () => {
+        const { profile } = get();
+        set({ isSaving: true, error: null });
+
+        try {
+          const payload = {
+            pollenAllergies: profile.pollenAllergies,
+            asthmaTriggers: profile.asthmaTriggers,
+            dietaryRestrictions: profile.dietaryRestrictions,
+            conditionType: profile.healthProfile.conditionType,
+            riskTolerance: profile.healthProfile.riskTolerance,
+            sensitivities: profile.healthProfile.sensitivities,
+          };
+
+          await apiClient.patch<HealthProfileApiResponse>(
+            API_ENDPOINTS.USER.HEALTH_PROFILE,
+            payload
+          );
+
+          set({ isSaving: false });
+        } catch {
+          set({ error: "Failed to save health profile", isSaving: false });
+          throw new Error("Failed to save health profile");
+        }
+      },
+
+      // Pollen allergy methods (local state updates)
+      togglePollenAllergy: (allergy: PollenAllergyType) => {
         const currentProfile = get().profile;
+        const isSelected = currentProfile.pollenAllergies.includes(allergy);
+
         set({
           profile: {
             ...currentProfile,
-            allergies: currentProfile.allergies.filter((a) => a !== allergy),
+            pollenAllergies: isSelected
+              ? currentProfile.pollenAllergies.filter((a) => a !== allergy)
+              : [...currentProfile.pollenAllergies, allergy],
           },
         });
       },
 
+      setPollenAllergies: (allergies: PollenAllergyType[]) => {
+        const currentProfile = get().profile;
+        set({
+          profile: {
+            ...currentProfile,
+            pollenAllergies: allergies,
+          },
+        });
+      },
+
+      // Asthma trigger methods (local state updates)
+      toggleAsthmaTrigger: (trigger: AsthmaTriggerType) => {
+        const currentProfile = get().profile;
+        const isSelected = currentProfile.asthmaTriggers.includes(trigger);
+
+        set({
+          profile: {
+            ...currentProfile,
+            asthmaTriggers: isSelected
+              ? currentProfile.asthmaTriggers.filter((t) => t !== trigger)
+              : [...currentProfile.asthmaTriggers, trigger],
+          },
+        });
+      },
+
+      setAsthmaTriggers: (triggers: AsthmaTriggerType[]) => {
+        const currentProfile = get().profile;
+        set({
+          profile: {
+            ...currentProfile,
+            asthmaTriggers: triggers,
+          },
+        });
+      },
+
+      // Dietary restriction methods (local state updates)
       addDietaryRestriction: (restriction: string) => {
         const currentProfile = get().profile;
         if (!currentProfile.dietaryRestrictions.includes(restriction)) {
@@ -177,20 +420,21 @@ export const useProfileStore = create<ProfileState>()(
         });
       },
 
-      updateAsthmaConfig: (config: Partial<AsthmaConfiguration>) => {
+      // Avatar methods (local storage only - not synced to backend)
+      setLocalAvatar: (avatarUrl: string | undefined) => {
         const currentProfile = get().profile;
         set({
           profile: {
             ...currentProfile,
-            asthmaConfig: {
-              ...currentProfile.asthmaConfig,
-              ...config,
+            user: {
+              ...currentProfile.user,
+              avatarUrl,
             },
           },
         });
       },
 
-      // Health profile methods
+      // Health profile methods (local state updates)
       updateHealthProfile: (healthProfile: Partial<HealthProfile>) => {
         const currentProfile = get().profile;
         set({
@@ -254,7 +498,7 @@ export const useProfileStore = create<ProfileState>()(
 
       // Get user profile formatted for score API
       getScoreUserProfile: () => {
-        const { healthProfile } = get().profile;
+        const { healthProfile, pollenAllergies, asthmaTriggers } = get().profile;
         return {
           condition_type: healthProfile.conditionType,
           risk_tolerance: healthProfile.riskTolerance,
@@ -264,6 +508,8 @@ export const useProfileStore = create<ProfileState>()(
             pm25_sensitivity: healthProfile.sensitivities.pm25,
             ozone_sensitivity: healthProfile.sensitivities.ozone,
           },
+          pollen_allergies: pollenAllergies,
+          asthma_triggers: asthmaTriggers,
         };
       },
     }),
@@ -272,12 +518,34 @@ export const useProfileStore = create<ProfileState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         profile: {
-          healthProfile: state.profile.healthProfile,
-          allergies: state.profile.allergies,
-          asthmaConfig: state.profile.asthmaConfig,
-          dietaryRestrictions: state.profile.dietaryRestrictions,
+          user: {
+            avatarUrl: state.profile?.user?.avatarUrl, // Local avatar persisted
+          },
+          healthProfile: state.profile?.healthProfile ?? DEFAULT_HEALTH_PROFILE,
+          pollenAllergies: state.profile?.pollenAllergies ?? [],
+          asthmaTriggers: state.profile?.asthmaTriggers ?? [],
+          dietaryRestrictions: state.profile?.dietaryRestrictions ?? [],
         },
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<ProfileState> | undefined;
+        return {
+          ...currentState,
+          profile: {
+            ...DEFAULT_PROFILE,
+            ...currentState.profile,
+            user: {
+              ...DEFAULT_PROFILE.user,
+              ...currentState.profile?.user,
+              avatarUrl: persisted?.profile?.user?.avatarUrl ?? currentState.profile?.user?.avatarUrl,
+            },
+            healthProfile: persisted?.profile?.healthProfile ?? currentState.profile?.healthProfile ?? DEFAULT_HEALTH_PROFILE,
+            pollenAllergies: persisted?.profile?.pollenAllergies ?? currentState.profile?.pollenAllergies ?? [],
+            asthmaTriggers: persisted?.profile?.asthmaTriggers ?? currentState.profile?.asthmaTriggers ?? [],
+            dietaryRestrictions: persisted?.profile?.dietaryRestrictions ?? currentState.profile?.dietaryRestrictions ?? [],
+          },
+        };
+      },
     }
   )
 );

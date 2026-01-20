@@ -1,114 +1,65 @@
 import { create } from "zustand";
 import type { AdvisorData, AdvisorItem, CompletedItem } from "./types";
 
-// Mocked advisor data
-const MOCK_DATA: AdvisorData = {
+// Default empty data
+const DEFAULT_DATA: AdvisorData = {
   summary: {
-    location: "Seattle, WA",
-    riskLevel: "High Risk.",
-    pollenLevel: "Pollen 8.5.",
-    windSpeed: "Wind 12mph.",
+    location: "Loading...",
+    riskLevel: "",
+    pollenLevel: "",
+    windSpeed: "",
   },
-  items: [
-    {
-      id: "1",
-      type: "alert",
-      title: "High Pollen Count",
-      description:
-        "Pollen levels are peaking today. Keep windows closed and verify your inhaler is nearby before heading out.",
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      type: "reminder",
-      title: "Morning Inhaler",
-      dueTime: "8:00 AM",
-      isOverdue: true,
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      type: "nutrition",
-      title: "Anti-inflammatory Focus",
-      description:
-        "Consider adding ginger or turmeric tea to your routine today. These ingredients may help reduce systemic inflammation during high pollen days.",
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: "4",
-      type: "lifestyle",
-      title: "Protect Your Eyes",
-      description:
-        "Wind is carrying dust from the north. Wearing sunglasses outside can create a barrier against irritants.",
-      timestamp: new Date().toISOString(),
-    },
-  ],
-  completedItems: [
-    {
-      id: "c1",
-      title: "Antihistamine",
-      completedAt: "7:30 AM",
-    },
-  ],
+  items: [],
+  completedItems: [],
 };
 
 interface AdvisorState {
   data: AdvisorData;
-  isLoading: boolean;
-  error: string | null;
+  dismissedIds: Set<string>;
+  snoozedIds: Set<string>;
+  savedIds: Set<string>;
 
   // Actions
-  fetchAdvisorData: () => Promise<void>;
+  setData: (data: AdvisorData) => void;
   dismissAlert: (id: string) => void;
   snoozeReminder: (id: string) => void;
   markReminderTaken: (id: string) => void;
   saveAdvice: (id: string) => void;
   dismissAdvice: (id: string) => void;
+  resetLocalState: () => void;
+
+  // Getters
+  getVisibleItems: () => AdvisorItem[];
+  getCompletedItems: () => CompletedItem[];
 }
 
 export const useAdvisorStore = create<AdvisorState>((set, get) => ({
-  data: MOCK_DATA,
-  isLoading: false,
-  error: null,
+  data: DEFAULT_DATA,
+  dismissedIds: new Set(),
+  snoozedIds: new Set(),
+  savedIds: new Set(),
 
-  fetchAdvisorData: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      set({ data: MOCK_DATA, isLoading: false });
-    } catch (error) {
-      set({ error: "Failed to fetch advisor data", isLoading: false });
-    }
+  setData: (data: AdvisorData) => {
+    set({ data });
   },
 
   dismissAlert: (id: string) => {
-    const currentData = get().data;
-    const updatedItems = currentData.items.filter((item) => item.id !== id);
+    const { dismissedIds } = get();
     set({
-      data: {
-        ...currentData,
-        items: updatedItems,
-      },
+      dismissedIds: new Set([...dismissedIds, id]),
     });
   },
 
   snoozeReminder: (id: string) => {
-    const currentData = get().data;
-    const updatedItems = currentData.items.map((item) =>
-      item.id === id && item.type === "reminder" ? { ...item, snoozed: true } : item
-    );
+    const { snoozedIds } = get();
     set({
-      data: {
-        ...currentData,
-        items: updatedItems,
-      },
+      snoozedIds: new Set([...snoozedIds, id]),
     });
   },
 
   markReminderTaken: (id: string) => {
-    const currentData = get().data;
-    const reminder = currentData.items.find((item) => item.id === id);
+    const { data, dismissedIds } = get();
+    const reminder = data.items.find((item) => item.id === id);
 
     if (reminder && reminder.type === "reminder") {
       const completedItem: CompletedItem = {
@@ -123,37 +74,56 @@ export const useAdvisorStore = create<AdvisorState>((set, get) => ({
 
       set({
         data: {
-          ...currentData,
-          items: currentData.items.filter((item) => item.id !== id),
-          completedItems: [...currentData.completedItems, completedItem],
+          ...data,
+          completedItems: [...data.completedItems, completedItem],
         },
+        dismissedIds: new Set([...dismissedIds, id]),
       });
     }
   },
 
   saveAdvice: (id: string) => {
-    const currentData = get().data;
-    const updatedItems = currentData.items.map((item) =>
-      item.id === id && (item.type === "nutrition" || item.type === "lifestyle")
-        ? { ...item, saved: true }
-        : item
-    );
+    const { savedIds } = get();
     set({
-      data: {
-        ...currentData,
-        items: updatedItems,
-      },
+      savedIds: new Set([...savedIds, id]),
     });
   },
 
   dismissAdvice: (id: string) => {
-    const currentData = get().data;
-    const updatedItems = currentData.items.filter((item) => item.id !== id);
+    const { dismissedIds } = get();
     set({
+      dismissedIds: new Set([...dismissedIds, id]),
+    });
+  },
+
+  resetLocalState: () => {
+    set({
+      dismissedIds: new Set(),
+      snoozedIds: new Set(),
+      savedIds: new Set(),
       data: {
-        ...currentData,
-        items: updatedItems,
+        ...get().data,
+        completedItems: [],
       },
     });
+  },
+
+  getVisibleItems: () => {
+    const { data, dismissedIds, snoozedIds, savedIds } = get();
+    return data.items
+      .filter((item) => !dismissedIds.has(item.id))
+      .map((item) => {
+        if (item.type === "reminder" && snoozedIds.has(item.id)) {
+          return { ...item, snoozed: true };
+        }
+        if ((item.type === "nutrition" || item.type === "lifestyle") && savedIds.has(item.id)) {
+          return { ...item, saved: true };
+        }
+        return item;
+      });
+  },
+
+  getCompletedItems: () => {
+    return get().data.completedItems;
   },
 }));
