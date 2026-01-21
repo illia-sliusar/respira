@@ -25,7 +25,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialIcons
               name="dashboard"
               size={24}
@@ -39,7 +39,7 @@ export default function TabsLayout() {
         name="trip-planner"
         options={{
           title: "Trip Planner",
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialIcons name="map" size={24} color={color} style={{ fontWeight: "300" }} />
           ),
         }}
@@ -49,7 +49,7 @@ export default function TabsLayout() {
         options={{
           href: null, // Hide from tab bar
           title: "History",
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialIcons name="history" size={24} color={color} style={{ fontWeight: "300" }} />
           ),
         }}
@@ -58,7 +58,7 @@ export default function TabsLayout() {
         name="advisor"
         options={{
           title: "Advisor",
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialIcons name="health-and-safety" size={24} color={color} style={{ fontWeight: "300" }} />
           ),
         }}
@@ -67,7 +67,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialIcons name="person" size={24} color={color} style={{ fontWeight: "300" }} />
           ),
         }}

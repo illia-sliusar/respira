@@ -11,6 +11,7 @@ import {
   Easing,
 } from "react-native-reanimated";
 import { analyticsService, ANALYTICS_EVENTS } from "@/src/modules/analytics";
+import { logger } from "@/src/lib/logger";
 import { useProfileStore } from "@/src/modules/profile";
 import {
   usePersonalizedScore,
@@ -150,7 +151,7 @@ export default function HomeScreen() {
 
   // Error state - show default UI
   if (error) {
-    console.warn("Score API error:", error);
+    logger.warn({ error }, "Score API error");
   }
 
   return (
