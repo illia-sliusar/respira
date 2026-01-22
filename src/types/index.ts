@@ -128,9 +128,9 @@ export interface HealthMetrics {
     longitude: number;
   };
   dataSource?: {
-    airQuality: "ads" | "simulated";
-    pollen: "ads" | "simulated";
-    weather?: "open-meteo" | "simulated";
+    airQuality: "ads" | "unavailable";
+    pollen: "ads" | "unavailable";
+    weather?: "open-meteo" | "unavailable";
   };
 }
 

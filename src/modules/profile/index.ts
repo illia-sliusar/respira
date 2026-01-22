@@ -11,12 +11,14 @@ export type {
   HealthProfile,
   PollenAllergyType,
   AsthmaTriggerType,
+  AsthmaSeverity,
   SelectOption,
   TriggerConfiguration,
 } from "./types";
 export {
   POLLEN_ALLERGY_OPTIONS,
   ASTHMA_TRIGGER_OPTIONS,
+  ASTHMA_SEVERITY_OPTIONS,
 } from "./types";
 export {
   ProfileHeader,

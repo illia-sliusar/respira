@@ -13,6 +13,7 @@ import type {
   SensitivitySettings,
   PollenAllergyType,
   AsthmaTriggerType,
+  AsthmaSeverity,
 } from "./types";
 
 // Default health profile for new users
@@ -36,6 +37,7 @@ const DEFAULT_PROFILE: ProfileData = {
     avatarUrl: undefined,
   },
   pollenAllergies: [],
+  asthmaSeverity: "none",
   asthmaTriggers: [],
   dietaryRestrictions: [],
   healthProfile: DEFAULT_HEALTH_PROFILE,
@@ -55,6 +57,7 @@ interface UserApiResponse {
 interface HealthProfileApiResponse {
   healthProfile: {
     pollenAllergies: string[];
+    asthmaSeverity: string;
     asthmaTriggers: string[];
     dietaryRestrictions: string[];
     conditionType: string;
@@ -85,7 +88,8 @@ interface ProfileState {
   togglePollenAllergy: (allergy: PollenAllergyType) => void;
   setPollenAllergies: (allergies: PollenAllergyType[]) => void;
 
-  // Asthma trigger actions
+  // Asthma actions
+  setAsthmaSeverity: (severity: AsthmaSeverity) => void;
   toggleAsthmaTrigger: (trigger: AsthmaTriggerType) => void;
   setAsthmaTriggers: (triggers: AsthmaTriggerType[]) => void;
 
@@ -147,6 +151,7 @@ export const useProfileStore = create<ProfileState>()(
                 avatarUrl: currentProfile.user.avatarUrl || apiUser.image || undefined,
               },
               pollenAllergies: apiHealth.pollenAllergies as PollenAllergyType[],
+              asthmaSeverity: (apiHealth.asthmaSeverity as AsthmaSeverity) ?? "none",
               asthmaTriggers: apiHealth.asthmaTriggers as AsthmaTriggerType[],
               dietaryRestrictions: apiHealth.dietaryRestrictions,
               healthProfile: {
@@ -196,6 +201,7 @@ export const useProfileStore = create<ProfileState>()(
             profile: {
               ...currentProfile,
               pollenAllergies: apiHealth.pollenAllergies as PollenAllergyType[],
+              asthmaSeverity: (apiHealth.asthmaSeverity as AsthmaSeverity) ?? "none",
               asthmaTriggers: apiHealth.asthmaTriggers as AsthmaTriggerType[],
               dietaryRestrictions: apiHealth.dietaryRestrictions,
               healthProfile: {
@@ -217,6 +223,7 @@ export const useProfileStore = create<ProfileState>()(
           // Build the API payload
           const payload: {
             pollenAllergies?: string[];
+            asthmaSeverity?: string;
             asthmaTriggers?: string[];
             dietaryRestrictions?: string[];
             conditionType?: string;
@@ -231,6 +238,9 @@ export const useProfileStore = create<ProfileState>()(
 
           if (data.pollenAllergies !== undefined) {
             payload.pollenAllergies = data.pollenAllergies;
+          }
+          if (data.asthmaSeverity !== undefined) {
+            payload.asthmaSeverity = data.asthmaSeverity;
           }
           if (data.asthmaTriggers !== undefined) {
             payload.asthmaTriggers = data.asthmaTriggers;
@@ -260,6 +270,7 @@ export const useProfileStore = create<ProfileState>()(
             profile: {
               ...currentProfile,
               pollenAllergies: apiHealth.pollenAllergies as PollenAllergyType[],
+              asthmaSeverity: (apiHealth.asthmaSeverity as AsthmaSeverity) ?? "none",
               asthmaTriggers: apiHealth.asthmaTriggers as AsthmaTriggerType[],
               dietaryRestrictions: apiHealth.dietaryRestrictions,
               healthProfile: {
@@ -323,6 +334,7 @@ export const useProfileStore = create<ProfileState>()(
         try {
           const payload = {
             pollenAllergies: profile.pollenAllergies,
+            asthmaSeverity: profile.asthmaSeverity,
             asthmaTriggers: profile.asthmaTriggers,
             dietaryRestrictions: profile.dietaryRestrictions,
             conditionType: profile.healthProfile.conditionType,
@@ -347,12 +359,26 @@ export const useProfileStore = create<ProfileState>()(
         const currentProfile = get().profile;
         const isSelected = currentProfile.pollenAllergies.includes(allergy);
 
+        let newAllergies: PollenAllergyType[];
+
+        if (isSelected) {
+          // Removing the allergy
+          newAllergies = currentProfile.pollenAllergies.filter((a) => a !== allergy);
+        } else if (allergy === "not_sure") {
+          // Selecting "not_sure" clears all other allergies
+          newAllergies = ["not_sure"];
+        } else {
+          // Selecting a specific allergy removes "not_sure"
+          newAllergies = [
+            ...currentProfile.pollenAllergies.filter((a) => a !== "not_sure"),
+            allergy,
+          ];
+        }
+
         set({
           profile: {
             ...currentProfile,
-            pollenAllergies: isSelected
-              ? currentProfile.pollenAllergies.filter((a) => a !== allergy)
-              : [...currentProfile.pollenAllergies, allergy],
+            pollenAllergies: newAllergies,
           },
         });
       },
@@ -367,7 +393,19 @@ export const useProfileStore = create<ProfileState>()(
         });
       },
 
-      // Asthma trigger methods (local state updates)
+      // Asthma methods (local state updates)
+      setAsthmaSeverity: (severity: AsthmaSeverity) => {
+        const currentProfile = get().profile;
+        set({
+          profile: {
+            ...currentProfile,
+            asthmaSeverity: severity,
+            // Clear triggers when setting to "none"
+            asthmaTriggers: severity === "none" ? [] : currentProfile.asthmaTriggers,
+          },
+        });
+      },
+
       toggleAsthmaTrigger: (trigger: AsthmaTriggerType) => {
         const currentProfile = get().profile;
         const isSelected = currentProfile.asthmaTriggers.includes(trigger);
@@ -523,6 +561,7 @@ export const useProfileStore = create<ProfileState>()(
           },
           healthProfile: state.profile?.healthProfile ?? DEFAULT_HEALTH_PROFILE,
           pollenAllergies: state.profile?.pollenAllergies ?? [],
+          asthmaSeverity: state.profile?.asthmaSeverity ?? "none",
           asthmaTriggers: state.profile?.asthmaTriggers ?? [],
           dietaryRestrictions: state.profile?.dietaryRestrictions ?? [],
         },
@@ -541,6 +580,7 @@ export const useProfileStore = create<ProfileState>()(
             },
             healthProfile: persisted?.profile?.healthProfile ?? currentState.profile?.healthProfile ?? DEFAULT_HEALTH_PROFILE,
             pollenAllergies: persisted?.profile?.pollenAllergies ?? currentState.profile?.pollenAllergies ?? [],
+            asthmaSeverity: persisted?.profile?.asthmaSeverity ?? currentState.profile?.asthmaSeverity ?? "none",
             asthmaTriggers: persisted?.profile?.asthmaTriggers ?? currentState.profile?.asthmaTriggers ?? [],
             dietaryRestrictions: persisted?.profile?.dietaryRestrictions ?? currentState.profile?.dietaryRestrictions ?? [],
           },

@@ -9,6 +9,7 @@ export interface UserProfile {
 
 // Pollen allergy types based on ADS data
 export type PollenAllergyType =
+  | "not_sure"
   | "grass"
   | "tree"
   | "weed"
@@ -39,6 +40,7 @@ export interface SelectOption<T extends string> {
 
 // Available pollen allergy options from ADS data
 export const POLLEN_ALLERGY_OPTIONS: SelectOption<PollenAllergyType>[] = [
+  { value: "not_sure", label: "Not Sure", description: "I don't know my allergies" },
   { value: "grass", label: "Grass Pollen", description: "Common grass allergens" },
   { value: "tree", label: "Tree Pollen", description: "Combined tree pollen" },
   { value: "weed", label: "Weed Pollen", description: "Combined weed pollen" },
@@ -81,6 +83,43 @@ export type ConditionType = "asthma" | "allergy" | "both" | "unsure";
 // Risk tolerance level
 export type RiskTolerance = "low" | "medium" | "high";
 
+// Asthma severity levels based on GINA (Global Initiative for Asthma) classification
+export type AsthmaSeverity =
+  | "none"           // No asthma
+  | "intermittent"   // Intermittent asthma
+  | "mild"           // Mild persistent
+  | "moderate"       // Moderate persistent
+  | "severe";        // Severe persistent
+
+// Asthma severity options for UI
+export const ASTHMA_SEVERITY_OPTIONS: SelectOption<AsthmaSeverity>[] = [
+  {
+    value: "none",
+    label: "No Asthma",
+    description: "I don't have asthma"
+  },
+  {
+    value: "intermittent",
+    label: "Intermittent",
+    description: "Symptoms less than twice a week"
+  },
+  {
+    value: "mild",
+    label: "Mild Persistent",
+    description: "Symptoms more than twice a week but not daily"
+  },
+  {
+    value: "moderate",
+    label: "Moderate Persistent",
+    description: "Daily symptoms, may affect activity"
+  },
+  {
+    value: "severe",
+    label: "Severe Persistent",
+    description: "Continuous symptoms, frequent exacerbations"
+  },
+];
+
 // Sensitivity settings for score personalization (0-1 scale)
 export interface SensitivitySettings {
   pollen: number;
@@ -99,6 +138,7 @@ export interface HealthProfile {
 export interface ProfileData {
   user: UserProfile;
   pollenAllergies: PollenAllergyType[];
+  asthmaSeverity: AsthmaSeverity;
   asthmaTriggers: AsthmaTriggerType[];
   dietaryRestrictions: string[];
   healthProfile: HealthProfile;
@@ -106,6 +146,7 @@ export interface ProfileData {
 
 export interface UpdateProfileDto {
   pollenAllergies?: PollenAllergyType[];
+  asthmaSeverity?: AsthmaSeverity;
   asthmaTriggers?: AsthmaTriggerType[];
   dietaryRestrictions?: string[];
   healthProfile?: Partial<HealthProfile>;

@@ -22,6 +22,7 @@ export default function ProfileScreen() {
     isSaving,
     fetchProfile,
     togglePollenAllergy,
+    setAsthmaSeverity,
     toggleAsthmaTrigger,
     addDietaryRestriction,
     removeDietaryRestriction,
@@ -74,8 +75,10 @@ export default function ProfileScreen() {
         />
 
         <AsthmaConfigurationComponent
+          asthmaSeverity={profile.asthmaSeverity}
+          onSeverityChange={setAsthmaSeverity}
           selectedTriggers={profile.asthmaTriggers}
-          onToggle={toggleAsthmaTrigger}
+          onToggleTrigger={toggleAsthmaTrigger}
         />
 
         <DietaryRestrictions

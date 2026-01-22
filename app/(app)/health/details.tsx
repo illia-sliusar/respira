@@ -6,7 +6,6 @@ import { MaterialSymbol } from "@/src/ui";
 import {
   useCurrentHealth,
   HealthScoreCircle,
-  isAllSimulated,
 } from "@/src/modules/health-overview";
 import {
   usePersonalizedScore,
@@ -20,8 +19,6 @@ export default function HealthDetailsScreen() {
 
   const isLoading = healthLoading || scoreLoading;
   const error = healthError || scoreError;
-
-  const isSimulated = isAllSimulated(healthData);
 
   const personalizedScore = scoreData?.score?.score_1_10 ?? 0;
   const topFactors = scoreData?.score?.top_factors ?? [];
@@ -214,12 +211,6 @@ export default function HealthDetailsScreen() {
             simple
             size={140}
           />
-          {isSimulated && (
-            <View className="flex-row items-center mt-4 px-3 py-1 bg-yellow-500/10 rounded-full">
-              <MaterialSymbol name="info" size={14} color="#f59e0b" />
-              <Text className="text-xs text-yellow-500 ml-1">Estimated data</Text>
-            </View>
-          )}
         </View>
 
         <View className="px-6">

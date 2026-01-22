@@ -5,6 +5,7 @@ export {
   useHealthByLocation,
   hasRealData,
   isAllSimulated,
+  getDataSourceInfo,
 } from "./health-overview.api";
 
 // Components

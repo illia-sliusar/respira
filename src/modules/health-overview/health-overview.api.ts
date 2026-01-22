@@ -49,7 +49,7 @@ export function useCurrentHealth() {
 }
 
 /**
- * Check if health data has real (non-simulated) data available
+ * Check if health data has real data available
  */
 export function hasRealData(data: HealthMetrics | undefined): boolean {
   if (!data?.dataSource) return false;
@@ -57,11 +57,34 @@ export function hasRealData(data: HealthMetrics | undefined): boolean {
 }
 
 /**
- * Check if all data is simulated (no real data available)
+ * Check if all data is unavailable (no real data)
  */
 export function isAllSimulated(data: HealthMetrics | undefined): boolean {
   if (!data?.dataSource) return true;
-  return data.dataSource.airQuality === "simulated" && data.dataSource.pollen === "simulated";
+  return data.dataSource.airQuality === "unavailable" && data.dataSource.pollen === "unavailable";
+}
+
+/**
+ * Get data source info for display
+ */
+export function getDataSourceInfo(data: HealthMetrics | undefined): {
+  hasAirQuality: boolean;
+  hasPollen: boolean;
+  hasWeather: boolean;
+  allAvailable: boolean;
+  noneAvailable: boolean;
+} {
+  const airQuality = data?.dataSource?.airQuality === "ads";
+  const pollen = data?.dataSource?.pollen === "ads";
+  const weather = data?.dataSource?.weather === "open-meteo";
+
+  return {
+    hasAirQuality: airQuality,
+    hasPollen: pollen,
+    hasWeather: weather,
+    allAvailable: airQuality && pollen,
+    noneAvailable: !airQuality && !pollen,
+  };
 }
 
 // Query: Get health history with location
