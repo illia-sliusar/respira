@@ -1,6 +1,9 @@
 // API hook
 export { usePersonalizedScore } from "./score.api";
 
+// Refresh store
+export { useScoreRefreshStore } from "./refresh.store";
+
 // Score utilities (unified module)
 export {
   getScoreRiskLevel,

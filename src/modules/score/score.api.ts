@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS, QUERY_KEYS } from "@/src/lib/constants";
 import { useLocationStore } from "@/src/modules/location";
 import { useProfileStore } from "@/src/modules/profile";
+import { useScoreRefreshStore } from "./refresh.store";
 import type { PersonalizedScoreResponse, ScoreUserProfile } from "./types";
 
 interface UsePersonalizedScoreOptions {
@@ -24,13 +26,14 @@ export function usePersonalizedScore(options: UsePersonalizedScoreOptions = {}) 
   const getScoreUserProfile = useProfileStore(
     (state) => state.getScoreUserProfile
   );
+  const setLastRefresh = useScoreRefreshStore((state) => state.setLastRefresh);
 
   // Get profile from store
   const profile: ScoreUserProfile = getScoreUserProfile();
 
   const locationData = getLocationOrDefault();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: QUERY_KEYS.SCORE.PERSONALIZED(
       locationData.coordinates.latitude,
       locationData.coordinates.longitude
@@ -64,6 +67,15 @@ export function usePersonalizedScore(options: UsePersonalizedScoreOptions = {}) 
     // Keep data fresh for 5 minutes
     staleTime: 5 * 60 * 1000,
   });
+
+  // Update refresh timestamp when data is successfully fetched
+  useEffect(() => {
+    if (query.data && query.isSuccess && !query.isFetching) {
+      setLastRefresh();
+    }
+  }, [query.dataUpdatedAt, setLastRefresh]);
+
+  return query;
 }
 
 // Helper functions moved to ./score.utils.ts

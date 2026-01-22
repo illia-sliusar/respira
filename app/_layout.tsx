@@ -1,5 +1,5 @@
 import "../global.css";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -9,6 +9,10 @@ import { queryClient, queryPersister } from "@/src/lib/query-client";
 import { ErrorBoundary } from "@/src/modules/errors";
 import { useSession } from "@/src/lib/better-auth-client";
 import { Loading } from "@/src/ui";
+import { useAppLifecycle } from "@/src/lib/hooks";
+import { useScoreRefreshStore } from "@/src/modules/score";
+import { useLocationStore } from "@/src/modules/location";
+import { QUERY_KEYS } from "@/src/lib/constants";
 
 function RootLayoutContent() {
   const { data: session, isPending } = useSession();
@@ -16,6 +20,31 @@ function RootLayoutContent() {
   const segments = useSegments();
   const [mockSessionChecked, setMockSessionChecked] = useState(false);
   const [hasMockSession, setHasMockSession] = useState(false);
+
+  // Score refresh store
+  const shouldRefresh = useScoreRefreshStore((s) => s.shouldRefresh);
+  const setLastRefresh = useScoreRefreshStore((s) => s.setLastRefresh);
+  const getLocationOrDefault = useLocationStore((s) => s.getLocationOrDefault);
+
+  // Handle score refresh when app comes to foreground
+  const handleAppForeground = useCallback(() => {
+    if (shouldRefresh()) {
+      const location = getLocationOrDefault();
+      // Invalidate score query to trigger refetch
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SCORE.PERSONALIZED(
+          location.coordinates.latitude,
+          location.coordinates.longitude
+        ),
+      });
+      setLastRefresh();
+    }
+  }, [shouldRefresh, setLastRefresh, getLocationOrDefault]);
+
+  // Listen for app lifecycle changes
+  useAppLifecycle({
+    onForeground: handleAppForeground,
+  });
 
   // Check for mock session on mount and when segments change
   useEffect(() => {

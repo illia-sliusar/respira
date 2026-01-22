@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, ScrollView, ActivityIndicator, Text } from "react-native";
+import React, { useEffect, useCallback, useState } from "react";
+import { View, ScrollView, ActivityIndicator, Text, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -15,6 +15,7 @@ import { logger } from "@/src/lib/logger";
 import { useProfileStore } from "@/src/modules/profile";
 import {
   usePersonalizedScore,
+  useScoreRefreshStore,
   getScoreRiskLevel,
   getScoreRecommendation,
   getScoreColors,
@@ -31,7 +32,20 @@ import {
 
 export default function HomeScreen() {
   const { profile, fetchProfile } = useProfileStore();
-  const { data: scoreData, isLoading, error } = usePersonalizedScore();
+  const { data: scoreData, isLoading, error, refetch, isRefetching } = usePersonalizedScore();
+  const setLastRefresh = useScoreRefreshStore((s) => s.setLastRefresh);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  // Handle pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await refetch();
+      setLastRefresh();
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [refetch, setLastRefresh]);
 
   // Fetch profile on mount
   useEffect(() => {
@@ -174,6 +188,14 @@ export default function HomeScreen() {
             className="flex-1 relative z-10"
             contentContainerStyle={{ flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isManualRefreshing || isRefetching}
+                onRefresh={handleRefresh}
+                tintColor="#ffffff"
+                colors={["#3b82f6"]}
+              />
+            }
           >
             <View className="flex-1 items-center justify-center pb-20 px-6">
               {/* Score Circle */}
