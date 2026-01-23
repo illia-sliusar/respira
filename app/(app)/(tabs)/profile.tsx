@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, ScrollView, Alert, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -11,11 +11,12 @@ import {
   CurrentSession,
   useProfileStore,
 } from "@/src/modules/profile";
-import { Text } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useModal } from "@/src/ui";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { showAlert } = useModal();
   const {
     profile,
     isLoading,
@@ -27,6 +28,8 @@ export default function ProfileScreen() {
     addDietaryRestriction,
     removeDietaryRestriction,
     saveHealthProfile,
+    completeOnboarding,
+    hasCompletedOnboarding,
   } = useProfileStore();
 
   useEffect(() => {
@@ -36,9 +39,27 @@ export default function ProfileScreen() {
   const handleSave = async () => {
     try {
       await saveHealthProfile();
-      Alert.alert("Success", "Profile saved successfully");
+      // Mark onboarding as completed after first save
+      if (!hasCompletedOnboarding) {
+        completeOnboarding();
+        await showAlert({
+          title: "Welcome!",
+          message: "Your profile has been saved. You can now explore your personalized health insights.",
+          variant: "success",
+        });
+      } else {
+        await showAlert({
+          title: "Saved",
+          message: "Your profile has been updated successfully.",
+          variant: "success",
+        });
+      }
     } catch {
-      Alert.alert("Error", "Failed to save profile");
+      await showAlert({
+        title: "Error",
+        message: "Failed to save profile. Please try again.",
+        variant: "danger",
+      });
     }
   };
 

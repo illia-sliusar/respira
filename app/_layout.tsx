@@ -8,11 +8,10 @@ import * as SecureStore from "expo-secure-store";
 import { queryClient, queryPersister } from "@/src/lib/query-client";
 import { ErrorBoundary } from "@/src/modules/errors";
 import { useSession } from "@/src/lib/better-auth-client";
-import { Loading } from "@/src/ui";
+import { Loading, ModalProvider } from "@/src/ui";
 import { useAppLifecycle } from "@/src/lib/hooks";
-import { useScoreRefreshStore } from "@/src/modules/score";
-import { useLocationStore } from "@/src/modules/location";
-import { QUERY_KEYS } from "@/src/lib/constants";
+import { useRefreshOrchestrator } from "@/src/lib/refresh-orchestrator";
+import { useProfileStore } from "@/src/modules/profile";
 
 function RootLayoutContent() {
   const { data: session, isPending } = useSession();
@@ -21,25 +20,17 @@ function RootLayoutContent() {
   const [mockSessionChecked, setMockSessionChecked] = useState(false);
   const [hasMockSession, setHasMockSession] = useState(false);
 
-  // Score refresh store
-  const shouldRefresh = useScoreRefreshStore((s) => s.shouldRefresh);
-  const setLastRefresh = useScoreRefreshStore((s) => s.setLastRefresh);
-  const getLocationOrDefault = useLocationStore((s) => s.getLocationOrDefault);
+  // Refresh orchestrator for coordinated data refresh
+  const { refreshOnForeground } = useRefreshOrchestrator();
 
-  // Handle score refresh when app comes to foreground
+  // Onboarding status
+  const hasCompletedOnboarding = useProfileStore((s) => s.hasCompletedOnboarding);
+
+  // Handle data refresh when app comes to foreground
   const handleAppForeground = useCallback(() => {
-    if (shouldRefresh()) {
-      const location = getLocationOrDefault();
-      // Invalidate score query to trigger refetch
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.SCORE.PERSONALIZED(
-          location.coordinates.latitude,
-          location.coordinates.longitude
-        ),
-      });
-      setLastRefresh();
-    }
-  }, [shouldRefresh, setLastRefresh, getLocationOrDefault]);
+    // Orchestrator handles 15-min threshold check and smart advisor refresh
+    refreshOnForeground();
+  }, [refreshOnForeground]);
 
   // Listen for app lifecycle changes
   useAppLifecycle({
@@ -72,10 +63,18 @@ function RootLayoutContent() {
       // Redirect to login if not authenticated and not in auth group
       router.replace("/(auth)/login");
     } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to app home if authenticated and in auth group
-      router.replace("/");
+      // Use setTimeout to ensure navigation happens after Stack is mounted
+      setTimeout(() => {
+        if (!hasCompletedOnboarding) {
+          // First login - redirect to profile to fill health information
+          router.replace("/(app)/(tabs)/profile");
+        } else {
+          // Returning user - redirect to home
+          router.replace("/(app)/(tabs)");
+        }
+      }, 0);
     }
-  }, [session, isPending, segments, router, mockSessionChecked, hasMockSession]);
+  }, [session, isPending, segments, router, mockSessionChecked, hasMockSession, hasCompletedOnboarding]);
 
   if (isPending) {
     return <Loading message="Loading..." fullScreen />;
@@ -101,7 +100,9 @@ export default function RootLayout() {
           client={queryClient}
           persistOptions={{ persister: queryPersister }}
         >
-          <RootLayoutContent />
+          <ModalProvider>
+            <RootLayoutContent />
+          </ModalProvider>
         </PersistQueryClientProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +14,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { useProfileStore } from "@/src/modules/profile";
+import { useModal } from "@/src/ui";
 
 // Directory for storing avatar images
 const AVATAR_DIR = `${FileSystem.documentDirectory}avatars/`;
@@ -41,6 +41,7 @@ async function saveImageLocally(uri: string): Promise<string> {
 }
 
 export default function UserDetailsScreen() {
+  const { showAlert } = useModal();
   const {
     profile,
     isSaving,
@@ -62,10 +63,8 @@ export default function UserDetailsScreen() {
   }, [fetchProfile]);
 
   useEffect(() => {
-    // Parse name into first and last name
-    const nameParts = profile.user.name.split(" ");
-    setFirstName(nameParts[0] || "");
-    setLastName(nameParts.slice(1).join(" ") || "");
+    setFirstName(profile.user.firstName || "");
+    setLastName(profile.user.lastName || "");
     setEmail(profile.user.email);
     setAvatarUri(profile.user.avatarUrl);
   }, [profile.user]);
@@ -74,10 +73,11 @@ export default function UserDetailsScreen() {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert(
-        "Permission Required",
-        "Please allow access to your photo library to upload an avatar."
-      );
+      await showAlert({
+        title: "Permission Required",
+        message: "Please allow access to your photo library to upload an avatar.",
+        variant: "warning",
+      });
       return;
     }
 
@@ -95,43 +95,54 @@ export default function UserDetailsScreen() {
         setAvatarUri(localPath);
       } catch (error) {
         console.error("Failed to save image:", error);
-        Alert.alert("Error", "Failed to save image");
+        await showAlert({
+          title: "Error",
+          message: "Failed to save image. Please try again.",
+          variant: "danger",
+        });
       }
     }
   };
 
   const handleSave = async () => {
     if (!firstName.trim()) {
-      Alert.alert("Error", "First name is required");
-      return;
-    }
-
-    if (!email.trim()) {
-      Alert.alert("Error", "Email is required");
+      await showAlert({
+        title: "Missing Information",
+        message: "First name is required.",
+        variant: "warning",
+      });
       return;
     }
 
     setIsLoading(true);
     try {
-      const fullName = lastName.trim()
-        ? `${firstName.trim()} ${lastName.trim()}`
-        : firstName.trim();
-
       // Save avatar locally (not to backend)
       if (avatarUri) {
         setLocalAvatar(avatarUri);
       }
 
-      // Update name on backend (avatar is stored locally only)
+      // Build full name for Better Auth compatibility
+      const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+
+      // Update name fields on backend (avatar is stored locally only)
       await updateUserDetails({
         name: fullName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim() || null,
       });
 
-      Alert.alert("Success", "Profile updated successfully", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      await showAlert({
+        title: "Saved",
+        message: "Your profile has been updated successfully.",
+        variant: "success",
+      });
+      router.back();
     } catch {
-      Alert.alert("Error", "Failed to update profile");
+      await showAlert({
+        title: "Error",
+        message: "Failed to update profile. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setIsLoading(false);
     }

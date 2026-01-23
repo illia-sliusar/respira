@@ -15,7 +15,6 @@ import { logger } from "@/src/lib/logger";
 import { useProfileStore } from "@/src/modules/profile";
 import {
   usePersonalizedScore,
-  useScoreRefreshStore,
   getScoreRiskLevel,
   getScoreRecommendation,
   getScoreColors,
@@ -29,23 +28,42 @@ import {
   HealthDescription,
   FabricBackground,
 } from "@/src/modules/health-overview";
+import { useRefreshOrchestrator } from "@/src/lib/refresh-orchestrator";
+import type { CurrentEnvironmentData } from "@/src/lib/data-change-detector";
 
 export default function HomeScreen() {
   const { profile, fetchProfile } = useProfileStore();
-  const { data: scoreData, isLoading, error, refetch, isRefetching } = usePersonalizedScore();
-  const setLastRefresh = useScoreRefreshStore((s) => s.setLastRefresh);
+  const { data: scoreData, isLoading, error, isRefetching } = usePersonalizedScore();
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  // Build getCurrentData function for change detection
+  const getCurrentData = useCallback((): CurrentEnvironmentData | null => {
+    if (!scoreData) return null;
+    return {
+      score: scoreData.score.score_1_10,
+      aqi: scoreData.environmental_data.aqi,
+      pollenIndex: scoreData.environmental_data.pollen_index,
+      dominantAllergen: scoreData.environmental_data.dominant_allergen ?? null,
+      dominantDriver: scoreData.score.drivers.dominant_driver,
+      temperature: scoreData.environmental_data.temperature,
+      humidity: scoreData.environmental_data.humidity,
+    };
+  }, [scoreData]);
+
+  // Refresh orchestrator with current data getter
+  const { refreshManual } = useRefreshOrchestrator({
+    getCurrentData,
+  });
 
   // Handle pull-to-refresh
   const handleRefresh = useCallback(async () => {
     setIsManualRefreshing(true);
     try {
-      await refetch();
-      setLastRefresh();
+      await refreshManual();
     } finally {
       setIsManualRefreshing(false);
     }
-  }, [refetch, setLastRefresh]);
+  }, [refreshManual]);
 
   // Fetch profile on mount
   useEffect(() => {

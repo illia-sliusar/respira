@@ -33,10 +33,14 @@ export function usePersonalizedScore(options: UsePersonalizedScoreOptions = {}) 
 
   const locationData = getLocationOrDefault();
 
+  // Create a stable hash of profile data for cache invalidation
+  const profileHash = `${profile.condition_type}-${profile.risk_tolerance}-${profile.sensitivities.pollen_sensitivity}-${profile.sensitivities.pollution_sensitivity}-${profile.sensitivities.pm25_sensitivity}-${profile.sensitivities.ozone_sensitivity}`;
+
   const query = useQuery({
     queryKey: QUERY_KEYS.SCORE.PERSONALIZED(
       locationData.coordinates.latitude,
-      locationData.coordinates.longitude
+      locationData.coordinates.longitude,
+      profileHash
     ),
     queryFn: async (): Promise<PersonalizedScoreResponse> => {
       const params = new URLSearchParams({

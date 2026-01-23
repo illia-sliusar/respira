@@ -79,9 +79,10 @@ export function useAdvisorData(options: UseAdvisorDataOptions = {}) {
       return response.data;
     },
     enabled: enabled && !!location,
-    // Refetch every 15 minutes
-    refetchInterval: 15 * 60 * 1000,
-    // Keep data fresh for 10 minutes
-    staleTime: 10 * 60 * 1000,
+    // SMART REFRESH: Advisor uses OpenAI, so we disable auto-refresh
+    // Refresh is controlled by the refresh orchestrator based on data changes
+    refetchInterval: false, // No automatic refetch - saves OpenAI tokens
+    staleTime: Infinity, // Never auto-stale - manual invalidation only
+    gcTime: 30 * 60 * 1000, // Keep cached data for 30 minutes
   });
 }

@@ -7,3 +7,6 @@ export { SocialButton } from "./social-button";
 export { Toggle } from "./toggle";
 export { Chip } from "./chip";
 export { MaterialSymbol } from "./material-symbol";
+export { Modal, AlertModal, ConfirmModal } from "./modal";
+export { ModalProvider, useModal } from "./modal-provider";
+export type { ModalProps, ModalVariant, ModalButton } from "./modal";

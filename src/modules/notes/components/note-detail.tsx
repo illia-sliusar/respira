@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { Button, Loading, Card } from "@/src/ui";
+import { Button, Loading, Card, useModal } from "@/src/ui";
 import { useNote, useDeleteNote } from "../notes.api";
 import { analyticsService, ANALYTICS_EVENTS } from "@/src/modules/analytics";
 import type { Note } from "@/src/types";
@@ -23,6 +23,7 @@ interface NoteDetailProps {
 
 export function NoteDetail({ noteId }: NoteDetailProps) {
   const router = useRouter();
+  const { showConfirm, showAlert } = useModal();
   const { data: apiNote, isLoading } = useNote(noteId);
   const { mutate: deleteNote, isPending: isDeleting } = useDeleteNote();
 
@@ -40,29 +41,33 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
     });
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Note",
-      `Are you sure you want to delete "${note?.title}"? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            deleteNote(noteId, {
-              onSuccess: () => {
-                analyticsService.track(ANALYTICS_EVENTS.NOTE_DELETED, {
-                  noteId,
-                });
-                router.back();
-              },
-              onError: () => Alert.alert("Error", "Could not delete note"),
-            });
-          },
-        },
-      ]
-    );
+  const handleDelete = async () => {
+    const confirmed = await showConfirm({
+      title: "Delete Note",
+      message: `Are you sure you want to delete "${note?.title}"? This action cannot be undone.`,
+      variant: "danger",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      confirmVariant: "danger",
+    });
+
+    if (!confirmed) return;
+
+    deleteNote(noteId, {
+      onSuccess: () => {
+        analyticsService.track(ANALYTICS_EVENTS.NOTE_DELETED, {
+          noteId,
+        });
+        router.back();
+      },
+      onError: async () => {
+        await showAlert({
+          title: "Error",
+          message: "Could not delete note. Please try again.",
+          variant: "danger",
+        });
+      },
+    });
   };
 
   if (isLoading) {

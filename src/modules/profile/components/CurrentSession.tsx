@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -6,39 +6,47 @@ import * as SecureStore from "expo-secure-store";
 import { authClient } from "@/src/lib/better-auth-client";
 import { analyticsService } from "@/src/modules/analytics";
 import { APP_VERSION } from "@/src/lib/constants";
+import { useModal } from "@/src/ui";
 
 export function CurrentSession() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const { showConfirm, showAlert } = useModal();
 
-  const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          setIsLoggingOut(true);
-          try {
-            // Sign out from Better Auth
-            await authClient.signOut();
+  const handleLogout = async () => {
+    const confirmed = await showConfirm({
+      title: "Logout",
+      message: "Are you sure you want to logout?",
+      variant: "warning",
+      confirmText: "Logout",
+      cancelText: "Cancel",
+      confirmVariant: "danger",
+    });
 
-            // Clear local session storage (for mock sessions too)
-            await SecureStore.deleteItemAsync("tsmobile.session");
-            await SecureStore.deleteItemAsync("tsmobile.token");
+    if (!confirmed) return;
 
-            analyticsService.track("user_logged_out");
+    setIsLoggingOut(true);
+    try {
+      // Sign out from Better Auth
+      await authClient.signOut();
 
-            // Navigate to login screen
-            router.replace("/(auth)/login");
-          } catch (_error) {
-            Alert.alert("Error", "Failed to logout");
-          } finally {
-            setIsLoggingOut(false);
-          }
-        },
-      },
-    ]);
+      // Clear local session storage (for mock sessions too)
+      await SecureStore.deleteItemAsync("tsmobile.session");
+      await SecureStore.deleteItemAsync("tsmobile.token");
+
+      analyticsService.track("user_logged_out");
+
+      // Navigate to login screen
+      router.replace("/(auth)/login");
+    } catch (_error) {
+      await showAlert({
+        title: "Error",
+        message: "Failed to logout. Please try again.",
+        variant: "danger",
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (

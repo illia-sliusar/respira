@@ -3,6 +3,8 @@
 export interface UserProfile {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   avatarUrl?: string;
 }
@@ -154,6 +156,8 @@ export interface UpdateProfileDto {
 
 export interface UpdateUserDetailsDto {
   name?: string;
+  firstName?: string | null;
+  lastName?: string | null;
   email?: string;
   avatarUrl?: string;
 }

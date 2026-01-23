@@ -72,8 +72,8 @@ export const QUERY_KEYS = {
     BY_LOCATION: (location: string) => ["health", "location", location] as const,
   },
   SCORE: {
-    PERSONALIZED: (lat: number, lon: number) =>
-      ["score", "personalized", lat, lon] as const,
+    PERSONALIZED: (lat: number, lon: number, profileHash?: string) =>
+      ["score", "personalized", lat, lon, profileHash] as const,
   },
   ADVISOR: {
     DATA: (lat: number, lon: number) =>

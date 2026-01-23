@@ -49,6 +49,8 @@ interface UserApiResponse {
     id: string;
     email: string;
     name: string | null;
+    firstName: string | null;
+    lastName: string | null;
     image: string | null;
     role: string;
   };
@@ -76,6 +78,7 @@ interface ProfileState {
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
+  hasCompletedOnboarding: boolean;
 
   // Actions
   fetchProfile: () => Promise<void>;
@@ -83,6 +86,7 @@ interface ProfileState {
   updateProfile: (data: UpdateProfileDto) => Promise<void>;
   updateUserDetails: (data: UpdateUserDetailsDto) => Promise<void>;
   saveHealthProfile: () => Promise<void>;
+  completeOnboarding: () => void;
 
   // Pollen allergy actions
   togglePollenAllergy: (allergy: PollenAllergyType) => void;
@@ -126,6 +130,12 @@ export const useProfileStore = create<ProfileState>()(
       isLoading: false,
       isSaving: false,
       error: null,
+      hasCompletedOnboarding: false,
+
+      // Mark onboarding as completed
+      completeOnboarding: () => {
+        set({ hasCompletedOnboarding: true });
+      },
 
       // Fetch user profile from backend
       fetchProfile: async () => {
@@ -146,6 +156,8 @@ export const useProfileStore = create<ProfileState>()(
               user: {
                 id: apiUser.id,
                 name: apiUser.name || "",
+                firstName: apiUser.firstName || undefined,
+                lastName: apiUser.lastName || undefined,
                 email: apiUser.email,
                 // Keep local avatar if exists, otherwise use backend avatar
                 avatarUrl: currentProfile.user.avatarUrl || apiUser.image || undefined,
@@ -175,6 +187,8 @@ export const useProfileStore = create<ProfileState>()(
                 user: {
                   id: apiUser.id,
                   name: apiUser.name || "",
+                  firstName: apiUser.firstName || undefined,
+                  lastName: apiUser.lastName || undefined,
                   email: apiUser.email,
                   // Keep local avatar if exists
                   avatarUrl: currentProfile.user.avatarUrl || apiUser.image || undefined,
@@ -287,13 +301,19 @@ export const useProfileStore = create<ProfileState>()(
         }
       },
 
-      // Update user details (name, avatar) on backend
+      // Update user details (name, firstName, lastName, avatar) on backend
       updateUserDetails: async (data: UpdateUserDetailsDto) => {
         set({ isSaving: true, error: null });
         try {
-          const payload: { name?: string; image?: string | null } = {};
+          const payload: { name?: string; firstName?: string | null; lastName?: string | null; image?: string | null } = {};
           if (data.name !== undefined) {
             payload.name = data.name;
+          }
+          if (data.firstName !== undefined) {
+            payload.firstName = data.firstName;
+          }
+          if (data.lastName !== undefined) {
+            payload.lastName = data.lastName;
           }
           if (data.avatarUrl !== undefined) {
             payload.image = data.avatarUrl || null;
@@ -314,6 +334,8 @@ export const useProfileStore = create<ProfileState>()(
                 ...currentProfile.user,
                 id: apiUser.id,
                 name: apiUser.name || "",
+                firstName: apiUser.firstName || undefined,
+                lastName: apiUser.lastName || undefined,
                 email: apiUser.email,
                 avatarUrl: apiUser.image || undefined,
               },
@@ -555,6 +577,7 @@ export const useProfileStore = create<ProfileState>()(
       name: "respira-profile",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
         profile: {
           user: {
             avatarUrl: state.profile?.user?.avatarUrl, // Local avatar persisted
@@ -570,6 +593,7 @@ export const useProfileStore = create<ProfileState>()(
         const persisted = persistedState as Partial<ProfileState> | undefined;
         return {
           ...currentState,
+          hasCompletedOnboarding: persisted?.hasCompletedOnboarding ?? false,
           profile: {
             ...DEFAULT_PROFILE,
             ...currentState.profile,

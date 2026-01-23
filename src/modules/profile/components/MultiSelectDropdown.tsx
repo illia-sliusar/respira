@@ -109,7 +109,7 @@ export function MultiSelectDropdown<T extends string>({
       {/* Dropdown Trigger */}
       <TouchableOpacity
         onPress={() => setIsOpen(true)}
-        activeOpacity={0.7}
+        activeOpacity={1}
         className="flex-row items-center justify-between bg-neutral-900 rounded-xl px-4 py-4 border border-neutral-800"
       >
         <Text
@@ -131,7 +131,7 @@ export function MultiSelectDropdown<T extends string>({
               <TouchableOpacity
                 key={value}
                 onPress={() => onToggle(value)}
-                activeOpacity={0.7}
+                activeOpacity={1}
                 className="flex-row items-center gap-1.5 bg-blue-600/20 border border-blue-500/50 rounded-lg px-3 py-1.5"
               >
                 <Text className="text-blue-400 text-sm">
@@ -178,7 +178,7 @@ export function MultiSelectDropdown<T extends string>({
             {/* Header */}
             <View className="flex-row items-center justify-between px-6 py-4 border-b border-white/5">
               <Text className="text-lg font-medium text-white">{label}</Text>
-              <TouchableOpacity onPress={handleClose} activeOpacity={0.6}>
+              <TouchableOpacity onPress={handleClose} activeOpacity={1}>
                 <MaterialIcons name="close" size={24} color="#a1a1aa" />
               </TouchableOpacity>
             </View>
@@ -191,7 +191,7 @@ export function MultiSelectDropdown<T extends string>({
                   <TouchableOpacity
                     key={option.value}
                     onPress={() => onToggle(option.value)}
-                    activeOpacity={0.6}
+                    activeOpacity={1}
                     className="flex-row items-center justify-between px-6 py-4"
                   >
                     <View className="flex-1 mr-4">
@@ -228,7 +228,7 @@ export function MultiSelectDropdown<T extends string>({
             <View className="px-6 py-4 border-t border-white/5">
               <TouchableOpacity
                 onPress={handleClose}
-                activeOpacity={0.7}
+                activeOpacity={1}
                 className="bg-blue-600 rounded-xl py-3.5"
               >
                 <Text className="text-center text-white font-semibold text-base">

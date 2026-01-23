@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, ScrollView, Text, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, ScrollView, Text, ActivityIndicator, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   AdvisorHeader,
@@ -11,6 +11,7 @@ import {
   useAdvisorStore,
   useAdvisorData,
 } from "@/src/modules/advisor";
+import { useRefreshOrchestrator } from "@/src/lib/refresh-orchestrator";
 
 export default function AdvisorScreen() {
   const {
@@ -26,7 +27,21 @@ export default function AdvisorScreen() {
   } = useAdvisorStore();
 
   // Fetch advisor data from API
-  const { data: apiData, isLoading, error } = useAdvisorData();
+  const { data: apiData, isLoading, error, isRefetching } = useAdvisorData();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  // Refresh orchestrator - forces advisor refresh on pull
+  const { forceRefreshAdvisor } = useRefreshOrchestrator();
+
+  // Handle pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await forceRefreshAdvisor();
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [forceRefreshAdvisor]);
 
   // Sync API data to store when it arrives
   useEffect(() => {
@@ -67,6 +82,14 @@ export default function AdvisorScreen() {
           className="flex-1 bg-black"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ backgroundColor: "#000000", paddingBottom: 120 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isManualRefreshing || isRefetching}
+              onRefresh={handleRefresh}
+              tintColor="#ffffff"
+              colors={["#3b82f6"]}
+            />
+          }
         >
           <HealthSummaryComponent summary={storeData.summary} />
 
